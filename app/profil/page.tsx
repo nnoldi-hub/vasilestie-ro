@@ -1,11 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';client';
-
-import { useSession } from 'next-auth/react'                    <Badge variant={user.role === 'CRAFTSMAN' ? 'default' : 'secondary'}>
-                      {user.role === 'CRAFTSMAN' ? 'Meseriași' : 'Client'}
-                    </Badge>ort { redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
@@ -63,12 +59,9 @@ function ProfileContent() {
                 </CardTitle>
                 <CardDescription>
                   <div className="flex items-center justify-center gap-2">
-                    <Badge variant={user.role === 'craftsman' ? 'default' : 'secondary'}>
-                      {user.role === 'craftsman' ? 'Meseriași' : 'Client'}
+                    <Badge variant={user.role === 'CRAFTSMAN' ? 'default' : 'secondary'}>
+                      {user.role === 'CRAFTSMAN' ? 'Meseriași' : 'Client'}
                     </Badge>
-                    {user.isVerified && (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    )}
                   </div>
                 </CardDescription>
               </CardHeader>

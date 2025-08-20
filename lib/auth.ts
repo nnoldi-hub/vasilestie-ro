@@ -3,7 +3,10 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@prisma/client';
+// import { UserRole } from '@prisma/client';
+
+// Temporary type definition until Prisma client is generated
+type UserRole = 'USER' | 'CRAFTSMAN' | 'ADMIN' | 'SUPER_ADMIN' | 'MODERATOR' | 'SUPPORT';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -12,7 +15,6 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/auth/signin',
-    signUp: '/auth/signup',
   },
   providers: [
     CredentialsProvider({
@@ -63,7 +65,7 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.sub;
+        session.user.id = token.sub || '';
         session.user.role = token.role as UserRole;
       }
       return session;
