@@ -1,12 +1,10 @@
 // Tipuri pentru sistemul de administrare VasileStie.ro
 
 export type UserRole = 
-  | 'admin' 
-  | 'verificator' 
-  | 'suport' 
-  | 'marketing' 
-  | 'moderator' 
-  | 'content-manager';
+  | 'ADMIN' 
+  | 'SUPER_ADMIN' 
+  | 'MODERATOR' 
+  | 'SUPPORT';
 
 export type UserStatus = 'active' | 'inactive' | 'pending';
 
@@ -29,17 +27,28 @@ export interface TeamMember {
   id: string;
   firstName: string;
   lastName: string;
+  name: string; // Full name for compatibility
   email: string;
   role: UserRole;
   status: UserStatus;
   avatar?: string;
   phone?: string;
   department?: string;
+  
+  // Dates
   createdAt: Date;
   updatedAt: Date;
-  lastLogin?: Date;
+  lastActive?: Date;
+  lastLogin?: Date; // Add this for compatibility
+  joinedAt: Date;
+  hireDate?: Date; // Alternative name for joinedAt
+  
+  // Admin metadata
   createdBy: string; // ID-ul adminului care l-a creat
   permissions?: string[]; // permisiuni custom suplimentare
+  
+  // Optional fields for UI
+  salary?: number;
 }
 
 export interface ActivityLog {
@@ -113,83 +122,48 @@ export const PERMISSIONS: Permission[] = [
 ];
 
 export const ROLES: Record<UserRole, RoleConfig> = {
-  admin: {
-    id: 'admin',
+  ADMIN: {
+    id: 'ADMIN',
     name: 'Administrator',
-    description: 'Acces complet la toate funcționalitățile',
+    description: 'Acces complet la majoritatea funcționalităților',
     color: '#DC2626', // red-600
+    permissions: [
+      'users.view', 'users.create', 'users.edit',
+      'craftsmen.view', 'craftsmen.verify', 'craftsmen.edit',
+      'bookings.view', 'bookings.manage',
+      'content.view', 'content.create', 'content.edit',
+      'system.logs'
+    ],
+  },
+  SUPER_ADMIN: {
+    id: 'SUPER_ADMIN',
+    name: 'Super Administrator', 
+    description: 'Acces complet la toate funcționalitățile sistemului',
+    color: '#991B1B', // red-800
     permissions: PERMISSIONS.map(p => p.id), // Toate permisiunile
   },
-  verificator: {
-    id: 'verificator',
-    name: 'Verificator Meșteri',
-    description: 'Se ocupă de verificarea și aprobarea meșterilor',
-    color: '#2563EB', // blue-600
+  MODERATOR: {
+    id: 'MODERATOR',
+    name: 'Moderator',
+    description: 'Moderează conținutul și verifică meșteri',
+    color: '#EA580C', // orange-600
     permissions: [
       'users.view',
-      'craftsmen.view',
-      'craftsmen.verify',
-      'craftsmen.edit',
-      'craftsmen.suspend',
+      'craftsmen.view', 'craftsmen.verify', 'craftsmen.edit',
+      'content.view', 'content.moderate',
       'system.logs',
     ],
   },
-  suport: {
-    id: 'suport',
+  SUPPORT: {
+    id: 'SUPPORT',
     name: 'Suport Clienți',
     description: 'Oferă suport clienților și rezolvă probleme',
     color: '#059669', // emerald-600
     permissions: [
       'users.view',
       'craftsmen.view',
-      'bookings.view',
-      'bookings.manage',
-      'bookings.support',
+      'bookings.view', 'bookings.manage', 'bookings.support',
       'system.logs',
-    ],
-  },
-  marketing: {
-    id: 'marketing',
-    name: 'Marketing',
-    description: 'Gestionează campanii și comunicarea',
-    color: '#7C3AED', // violet-600
-    permissions: [
-      'users.view',
-      'craftsmen.view',
-      'content.view',
-      'content.create',
-      'content.edit',
-      'content.publish',
-      'marketing.campaigns',
-      'marketing.analytics',
-      'marketing.emails',
-    ],
-  },
-  moderator: {
-    id: 'moderator',
-    name: 'Moderator',
-    description: 'Moderează conținutul și interacțiunile',
-    color: '#EA580C', // orange-600
-    permissions: [
-      'users.view',
-      'craftsmen.view',
-      'content.view',
-      'content.edit',
-      'bookings.view',
-      'system.logs',
-    ],
-  },
-  'content-manager': {
-    id: 'content-manager',
-    name: 'Content Manager',
-    description: 'Gestionează conținutul platformei',
-    color: '#0891B2', // cyan-600
-    permissions: [
-      'content.view',
-      'content.create',
-      'content.edit',
-      'content.publish',
-      'marketing.analytics',
     ],
   },
 };

@@ -1,16 +1,18 @@
+'use client';
+
+import { useSession } from 'next-auth/react';
 import { AdminLayout } from '@/components/admin/admin-layout';
 import { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Admin Dashboard - VasileStie.ro',
-  description: 'Panou de administrare pentru gestionarea echipei și platformei VasileStie.ro',
-  robots: 'noindex, nofollow', // Nu indexa paginile admin
-};
-
 export default function AdminPage() {
-  // TODO: Adaugă verificare de autentificare
-  // În viitor, aici va fi logica pentru a verifica dacă utilizatorul
-  // este autentificat și are permisiuni de admin
+  const { data: session } = useSession();
   
-  return <AdminLayout />;
+  // The authentication is now handled by the layout and middleware
+  // This component will only render if the user is properly authenticated
+  
+  return (
+    <div>
+      <AdminLayout />
+    </div>
+  );
 }

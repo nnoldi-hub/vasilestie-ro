@@ -1,15 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { AdminProvider } from '@/lib/contexts/admin-context';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
 import { TeamManagement } from '@/components/admin/team-management';
 import { ActivitySection } from '@/components/admin/activity-section';
 import { ReportsSection } from '@/components/admin/reports-section';
 import { SettingsSection } from '@/components/admin/settings-section';
+import { AdminLogoutButton } from '@/components/auth/admin-logout-button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   LayoutDashboard, 
   Users, 
@@ -18,7 +21,8 @@ import {
   Shield,
   BarChart3,
   MessageSquare,
-  FileText
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 
 type AdminSection = 'dashboard' | 'team' | 'activity' | 'settings' | 'reports';
@@ -58,6 +62,7 @@ const navigation = [
 
 export function AdminLayout() {
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
+  const { data: session } = useSession();
 
   // Handle hash changes for navigation
   useEffect(() => {
@@ -96,6 +101,36 @@ export function AdminLayout() {
     }
   };
 
+  const getRoleBadgeColor = (role?: string) => {
+    switch (role) {
+      case 'SUPER_ADMIN':
+        return 'bg-red-50 text-red-700 border-red-200';
+      case 'ADMIN':
+        return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'MODERATOR':
+        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'SUPPORT':
+        return 'bg-green-50 text-green-700 border-green-200';
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
+  const getRoleDisplayName = (role?: string) => {
+    switch (role) {
+      case 'SUPER_ADMIN':
+        return 'Super Admin';
+      case 'ADMIN':
+        return 'Administrator';
+      case 'MODERATOR':
+        return 'Moderator';
+      case 'SUPPORT':
+        return 'Suport';
+      default:
+        return 'Utilizator';
+    }
+  };
+
   return (
     <AdminProvider>
       <div className="min-h-screen bg-gray-50">
@@ -116,12 +151,43 @@ export function AdminLayout() {
               </div>
               
               <div className="flex items-center space-x-4">
-                <Badge variant="outline" className="bg-green-50 text-green-700">
-                  Super Admin
+                {/* User Info */}
+                <div className="flex items-center space-x-3">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={session?.user?.image || ''} />
+                    <AvatarFallback>
+                      {session?.user?.name?.[0] || 'A'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden md:block">
+                    <div className="text-sm font-medium text-gray-900">
+                      {session?.user?.name || 'Administrator'}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {session?.user?.email}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Role Badge */}
+                <Badge 
+                  variant="outline" 
+                  className={getRoleBadgeColor(session?.user?.role)}
+                >
+                  {getRoleDisplayName(session?.user?.role)}
                 </Badge>
-                <Button variant="outline" size="sm">
+
+                {/* Actions */}
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.open('/', '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
                   Înapoi la site
                 </Button>
+                
+                <AdminLogoutButton variant="outline" size="sm" />
               </div>
             </div>
           </div>

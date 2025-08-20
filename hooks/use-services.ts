@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { supabase } from '@/lib/supabase';
 
 export interface Service {
   id: string;

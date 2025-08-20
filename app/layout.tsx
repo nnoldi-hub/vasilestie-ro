@@ -1,13 +1,14 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+// Temporarily disable Google Fonts due to network restrictions
+// import { Inter } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import { Providers } from '@/components/providers';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { FloatingChatButton } from '@/components/chat/floating-chat-button';
 
-const inter = Inter({ subsets: ['latin'] });
+// const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: "VasileStie.ro - Vasile știe. Tu doar alegi.",
@@ -21,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ro">
-      <body className={inter.className}>
+      <body className="font-sans">
         <Providers>
           <div className="min-h-screen flex flex-col">
             <Header />
