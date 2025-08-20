@@ -2,7 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
-import { AuthProvider } from '@/contexts/auth-context';
+import { Providers } from '@/components/providers';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { FloatingChatButton } from '@/components/chat/floating-chat-button';
@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="ro">
       <body className={inter.className}>
-        <AuthProvider>
+        <Providers>
           <div className="min-h-screen flex flex-col">
             <Header />
             <main className="flex-1">
@@ -32,7 +32,7 @@ export default function RootLayout({
           </div>
           <FloatingChatButton />
           <Toaster />
-        </AuthProvider>
+        </Providers>
       </body>
     </html>
   );

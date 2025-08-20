@@ -1,0 +1,206 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// NextAuth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  craftsman     Craftsman?
+  reviews       Review[]
+  bookings      Booking[]
+  adminLogs     AdminLog[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Business Models
+model Craftsman {
+  id              String          @id @default(cuid())
+  userId          String          @unique
+  businessName    String
+  description     String
+  phone           String
+  address         String
+  city            String
+  county          String
+  experience      Int // years
+  verified        Boolean         @default(false)
+  rating          Float           @default(0)
+  reviewCount     Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relations
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories      CraftsmanCategory[]
+  reviews         Review[]
+  bookings        Booking[]
+  portfolio       PortfolioItem[]
+}
+
+model Category {
+  id          String              @id @default(cuid())
+  name        String              @unique
+  slug        String              @unique
+  icon        String
+  description String?
+  createdAt   DateTime            @default(now())
+  
+  // Relations
+  craftsmen   CraftsmanCategory[]
+}
+
+model CraftsmanCategory {
+  id          String    @id @default(cuid())
+  craftsmanId String
+  categoryId  String
+  
+  // Relations
+  craftsman   Craftsman @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  @@unique([craftsmanId, categoryId])
+}
+
+model Review {
+  id          String    @id @default(cuid())
+  userId      String
+  craftsmanId String
+  rating      Int       // 1-5
+  comment     String?
+  createdAt   DateTime  @default(now())
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  craftsman   Craftsman @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, craftsmanId])
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  userId      String
+  craftsmanId String
+  service     String
+  description String
+  status      BookingStatus @default(PENDING)
+  scheduledAt DateTime
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  // Relations
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  craftsman   Craftsman     @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
+}
+
+model PortfolioItem {
+  id          String    @id @default(cuid())
+  craftsmanId String
+  title       String
+  description String?
+  imageUrl    String
+  createdAt   DateTime  @default(now())
+  
+  // Relations
+  craftsman   Craftsman @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
+}
+
+model AdminLog {
+  id        String          @id @default(cuid())
+  userId    String
+  action    AdminAction
+  details   String?
+  createdAt DateTime        @default(now())
+  
+  // Relations
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Enums
+enum UserRole {
+  USER
+  CRAFTSMAN
+  ADMIN
+  SUPER_ADMIN
+  MODERATOR
+  SUPPORT
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AdminAction {
+  USER_CREATED
+  USER_UPDATED
+  USER_DELETED
+  CRAFTSMAN_VERIFIED
+  CRAFTSMAN_REJECTED
+  REVIEW_MODERATED
+  BOOKING_UPDATED
+  CATEGORY_CREATED
+  CATEGORY_UPDATED
+  SYSTEM_CONFIG_CHANGED
+  LOGIN
+  LOGOUT
+}

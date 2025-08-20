@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,8 @@ import { LocationButton } from '@/components/ui/location-button';
 import { Search, MapPin, Star, Users, CheckCircle } from 'lucide-react';
 
 export function Hero() {
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('');
@@ -65,14 +66,14 @@ export function Hero() {
               {user ? (
                 <>
                   Bună, <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    {user.firstName}
+                    {user.name?.split(' ')[0] || 'Utilizator'}
                   </span>!
                   <br />
-                  {user.role === 'craftsman' ? 'Gestionează-ți' : 'Găsește'}{' '}
+                  {user.role === 'CRAFTSMAN' ? 'Gestionează-ți' : 'Găsește'}{' '}
                   <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    {user.role === 'craftsman' ? 'afacerea' : 'meseriașul'}
+                    {user.role === 'CRAFTSMAN' ? 'afacerea' : 'meseriașul'}
                   </span>{' '}
-                  {user.role === 'craftsman' ? 'ta' : 'potrivit'}
+                  {user.role === 'CRAFTSMAN' ? 'ta' : 'potrivit'}
                 </>
               ) : (
                 <>
@@ -85,7 +86,7 @@ export function Hero() {
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-600 sm:text-xl">
               {user ? (
-                user.role === 'craftsman' ? (
+                user.role === 'CRAFTSMAN' ? (
                   `Bine ai revenit! Gestionează-ți profilul și comenzile din panoul de control.`
                 ) : (
                   `Bine ai revenit! Lasă că știe Vasile pe cineva bun pentru proiectul tău.`

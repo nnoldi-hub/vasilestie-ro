@@ -1,0 +1,291 @@
+import { prisma } from '@/lib/prisma';
+
+// Team Management
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'MODERATOR' | 'SUPPORT';
+  status: 'active' | 'inactive';
+  lastActive: Date;
+  joinedAt: Date;
+  permissions: string[];
+}
+
+export async function getTeamMembers(): Promise<TeamMember[]> {
+  const users = await prisma.user.findMany({
+    where: {
+      role: {
+        in: ['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'SUPPORT']
+      }
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  });
+
+  return users.map(user => ({
+    id: user.id,
+    name: user.name || 'Unknown',
+    email: user.email,
+    role: user.role as TeamMember['role'],
+    status: 'active' as const,
+    lastActive: new Date(),
+    joinedAt: user.createdAt,
+    permissions: getPermissionsForRole(user.role)
+  }));
+}
+
+export async function createTeamMember(data: Partial<TeamMember>): Promise<TeamMember> {
+  const user = await prisma.user.create({
+    data: {
+      name: data.name || '',
+      email: data.email!,
+      role: data.role || 'SUPPORT',
+      emailVerified: new Date()
+    }
+  });
+
+  return {
+    id: user.id,
+    name: user.name || 'Unknown',
+    email: user.email,
+    role: user.role as TeamMember['role'],
+    status: 'active',
+    lastActive: new Date(),
+    joinedAt: user.createdAt,
+    permissions: getPermissionsForRole(user.role)
+  };
+}
+
+export async function updateTeamMember(id: string, data: Partial<TeamMember>): Promise<TeamMember> {
+  const user = await prisma.user.update({
+    where: { id },
+    data: {
+      name: data.name,
+      role: data.role
+    }
+  });
+
+  return {
+    id: user.id,
+    name: user.name || 'Unknown',
+    email: user.email,
+    role: user.role as TeamMember['role'],
+    status: 'active',
+    lastActive: new Date(),
+    joinedAt: user.createdAt,
+    permissions: getPermissionsForRole(user.role)
+  };
+}
+
+export async function deleteTeamMember(id: string): Promise<void> {
+  await prisma.user.delete({
+    where: { id }
+  });
+}
+
+// Activity Logs
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  userName: string;
+  action: string;
+  details?: string;
+  timestamp: Date;
+  type: 'create' | 'update' | 'delete' | 'login' | 'system';
+}
+
+export async function getActivityLogs(filters?: {
+  userId?: string;
+  action?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+}): Promise<ActivityLog[]> {
+  const logs = await prisma.adminLog.findMany({
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true
+        }
+      }
+    },
+    where: {
+      ...(filters?.userId && { userId: filters.userId }),
+      ...(filters?.action && { action: filters.action }),
+      ...(filters?.dateFrom && {
+        createdAt: {
+          gte: filters.dateFrom,
+          ...(filters.dateTo && { lte: filters.dateTo })
+        }
+      })
+    },
+    orderBy: {
+      createdAt: 'desc'
+    },
+    take: 100
+  });
+
+  return logs.map(log => ({
+    id: log.id,
+    userId: log.userId,
+    userName: log.user.name || log.user.email,
+    action: log.action,
+    details: log.details || undefined,
+    timestamp: log.createdAt,
+    type: getActionType(log.action)
+  }));
+}
+
+export async function createActivityLog(data: {
+  userId: string;
+  action: string;
+  details?: string;
+}): Promise<void> {
+  await prisma.adminLog.create({
+    data: {
+      userId: data.userId,
+      action: data.action as any,
+      details: data.details
+    }
+  });
+}
+
+// Statistics
+export interface AdminStats {
+  totalUsers: number;
+  totalCraftsmen: number;
+  totalBookings: number;
+  monthlyRevenue: number;
+  userGrowth: {
+    current: number;
+    previous: number;
+    change: number;
+  };
+  craftsmenGrowth: {
+    current: number;
+    previous: number;
+    change: number;
+  };
+  bookingGrowth: {
+    current: number;
+    previous: number;
+    change: number;
+  };
+  revenueGrowth: {
+    current: number;
+    previous: number;
+    change: number;
+  };
+}
+
+export async function getAdminStats(): Promise<AdminStats> {
+  const now = new Date();
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+  const [
+    totalUsers,
+    totalCraftsmen,
+    totalBookings,
+    currentMonthUsers,
+    previousMonthUsers,
+    currentMonthCraftsmen,
+    previousMonthCraftsmen,
+    currentMonthBookings,
+    previousMonthBookings
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.craftsman.count(),
+    prisma.booking.count(),
+    prisma.user.count({
+      where: {
+        createdAt: { gte: currentMonthStart }
+      }
+    }),
+    prisma.user.count({
+      where: {
+        createdAt: { gte: previousMonthStart, lte: previousMonthEnd }
+      }
+    }),
+    prisma.craftsman.count({
+      where: {
+        createdAt: { gte: currentMonthStart }
+      }
+    }),
+    prisma.craftsman.count({
+      where: {
+        createdAt: { gte: previousMonthStart, lte: previousMonthEnd }
+      }
+    }),
+    prisma.booking.count({
+      where: {
+        createdAt: { gte: currentMonthStart }
+      }
+    }),
+    prisma.booking.count({
+      where: {
+        createdAt: { gte: previousMonthStart, lte: previousMonthEnd }
+      }
+    })
+  ]);
+
+  // Calculate mock revenue for now
+  const monthlyRevenue = 284500; // Mock data
+  const currentRevenue = monthlyRevenue;
+  const previousRevenue = 245000; // Mock data
+
+  return {
+    totalUsers,
+    totalCraftsmen,
+    totalBookings,
+    monthlyRevenue,
+    userGrowth: {
+      current: currentMonthUsers,
+      previous: previousMonthUsers,
+      change: calculatePercentChange(currentMonthUsers, previousMonthUsers)
+    },
+    craftsmenGrowth: {
+      current: currentMonthCraftsmen,
+      previous: previousMonthCraftsmen,
+      change: calculatePercentChange(currentMonthCraftsmen, previousMonthCraftsmen)
+    },
+    bookingGrowth: {
+      current: currentMonthBookings,
+      previous: previousMonthBookings,
+      change: calculatePercentChange(currentMonthBookings, previousMonthBookings)
+    },
+    revenueGrowth: {
+      current: currentRevenue,
+      previous: previousRevenue,
+      change: calculatePercentChange(currentRevenue, previousRevenue)
+    }
+  };
+}
+
+// Helper functions
+function getPermissionsForRole(role: string): string[] {
+  const permissions = {
+    SUPER_ADMIN: ['all'],
+    ADMIN: ['users.read', 'users.write', 'craftsmen.read', 'craftsmen.write', 'bookings.read', 'bookings.write'],
+    MODERATOR: ['users.read', 'craftsmen.read', 'bookings.read', 'reviews.moderate'],
+    SUPPORT: ['users.read', 'bookings.read', 'support.respond']
+  };
+  
+  return permissions[role as keyof typeof permissions] || [];
+}
+
+function getActionType(action: string): ActivityLog['type'] {
+  if (action.includes('CREATED')) return 'create';
+  if (action.includes('UPDATED')) return 'update';
+  if (action.includes('DELETED')) return 'delete';
+  if (action.includes('LOGIN')) return 'login';
+  return 'system';
+}
+
+function calculatePercentChange(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100);
+}

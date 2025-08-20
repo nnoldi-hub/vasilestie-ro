@@ -1,7 +1,11 @@
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
-import { ProtectedRoute } from '@/components/auth/protected-route';
+import { useSession } from 'next-auth/react';
+import { redirect } from 'next/navigation';client';
+
+import { useSession } from 'next-auth/react'                    <Badge variant={user.role === 'CRAFTSMAN' ? 'default' : 'secondary'}>
+                      {user.role === 'CRAFTSMAN' ? 'Meseriași' : 'Client'}
+                    </Badge>ort { redirect } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
@@ -21,7 +25,13 @@ import {
 } from 'lucide-react';
 
 function ProfileContent() {
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  
+  if (!session) {
+    redirect('/auth/signin');
+  }
+  
+  const user = session.user;
 
   if (!user) return null;
 
@@ -43,13 +53,13 @@ function ProfileContent() {
             <Card className="lg:col-span-1">
               <CardHeader className="text-center">
                 <Avatar className="w-24 h-24 mx-auto mb-4">
-                  <AvatarImage src={user.avatar} alt={`${user.firstName} ${user.lastName}`} />
+                  <AvatarImage src={user.image || ''} alt={user.name || 'User'} />
                   <AvatarFallback className="text-2xl">
-                    {user.firstName[0]}{user.lastName[0]}
+                    {user.name?.[0] || 'U'}{user.name?.split(' ')[1]?.[0] || ''}
                   </AvatarFallback>
                 </Avatar>
                 <CardTitle className="text-xl">
-                  {user.firstName} {user.lastName}
+                  {user.name || 'Utilizator'}
                 </CardTitle>
                 <CardDescription>
                   <div className="flex items-center justify-center gap-2">
@@ -68,32 +78,6 @@ function ProfileContent() {
                   <Mail className="h-4 w-4 text-gray-500" />
                   <span className="truncate">{user.email}</span>
                 </div>
-                {user.phone && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <span>{user.phone}</span>
-                  </div>
-                )}
-                {user.city && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <span>{user.city}</span>
-                  </div>
-                )}
-                {user.role === 'craftsman' && (
-                  <>
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Briefcase className="h-4 w-4 text-gray-500" />
-                      <span>{user.category}</span>
-                    </div>
-                    {user.rating && (
-                      <div className="flex items-center space-x-2 text-sm">
-                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                        <span>{user.rating} ({user.reviewCount} recenzii)</span>
-                      </div>
-                    )}
-                  </>
-                )}
               </CardContent>
             </Card>
 
@@ -109,55 +93,19 @@ function ProfileContent() {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Prenume</Label>
-                    <Input value={user.firstName} disabled className="bg-gray-50" />
+                    <Label>Nume</Label>
+                    <Input value={user.name || ''} disabled className="bg-gray-50" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Nume</Label>
-                    <Input value={user.lastName} disabled className="bg-gray-50" />
+                    <Label>Email</Label>
+                    <Input value={user.email || ''} disabled className="bg-gray-50" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input value={user.email} disabled className="bg-gray-50" />
+                  <Label>Rol</Label>
+                  <Input value={user.role || ''} disabled className="bg-gray-50" />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Telefon</Label>
-                    <Input value={user.phone || 'Nu a fost adăugat'} disabled className="bg-gray-50" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Oraș</Label>
-                    <Input value={user.city || 'Nu a fost adăugat'} disabled className="bg-gray-50" />
-                  </div>
-                </div>
-
-                {user.role === 'craftsman' && (
-                  <>
-                    <div className="space-y-2">
-                      <Label>Categoria</Label>
-                      <Input value={user.category || ''} disabled className="bg-gray-50" />
-                    </div>
-                    
-                    {user.hourlyRate && (
-                      <div className="space-y-2">
-                        <Label>Tarif orar</Label>
-                        <Input value={`${user.hourlyRate} RON`} disabled className="bg-gray-50" />
-                      </div>
-                    )}
-
-                    {user.description && (
-                      <div className="space-y-2">
-                        <Label>Descrierea serviciilor</Label>
-                        <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700">
-                          {user.description}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
 
                 <div className="pt-6 border-t">
                   <Button className="w-full md:w-auto">
@@ -177,9 +125,5 @@ function ProfileContent() {
 }
 
 export default function ProfilePage() {
-  return (
-    <ProtectedRoute>
-      <ProfileContent />
-    </ProtectedRoute>
-  );
+  return <ProfileContent />;
 }

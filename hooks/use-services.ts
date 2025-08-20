@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/supabase-auth-context';
+import { useSession } from 'next-auth/react';
 
 export interface Service {
   id: string;
@@ -258,7 +257,8 @@ export function useServices() {
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const fetchServices = useCallback(async (filters?: ServiceFilters) => {
     setIsLoading(true);

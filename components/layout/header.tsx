@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { AuthModal } from '@/components/auth/auth-modal';
+import { useSession, signOut } from 'next-auth/react';
 import VasileLogo from '@/components/brand/vasile-logo';
 import { LocationButton } from '@/components/ui/location-button';
 import { Button } from '@/components/ui/button';
@@ -29,15 +28,14 @@ import {
   X,
   Hammer,
   Star,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Header() {
-  const { user, logout } = useAuth();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
   const [headerSearchQuery, setHeaderSearchQuery] = useState('');
   const [headerLocation, setHeaderLocation] = useState('');
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
@@ -79,8 +77,7 @@ export function Header() {
 
   const handleLogout = async () => {
     try {
-      await logout();
-      router.push('/');
+      await signOut({ callbackUrl: '/' });
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -152,14 +149,14 @@ export function Header() {
               Devino meseriaș
             </Link>
 
-            {user ? (
+            {session?.user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar || undefined} alt={user.firstName} />
+                      <AvatarImage src={session.user.image || undefined} alt={session.user.name || 'User'} />
                       <AvatarFallback>
-                        {user.firstName?.[0]?.toUpperCase()}{user.lastName?.[0]?.toUpperCase()}
+                        {session.user.name?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -167,13 +164,19 @@ export function Header() {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user.firstName} {user.lastName}</p>
+                      <p className="font-medium">{session.user.name}</p>
                       <p className="w-[200px] truncate text-sm text-muted-foreground">
-                        {user.email}
+                        {session.user.email}
                       </p>
                     </div>
                   </div>
                   <DropdownMenuSeparator />
+                  {(session.user.role === 'SUPER_ADMIN' || session.user.role === 'ADMIN') && (
+                    <DropdownMenuItem onClick={() => router.push('/admin')}>
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Admin Panel</span>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => router.push('/profil')}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Profil</span>
@@ -202,25 +205,21 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <div className="flex items-center space-x-3">
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setAuthModalTab('login');
-                    setShowAuthModal(true);
-                  }}
-                  className="text-gray-700 hover:text-brand-primary font-medium"
-                >
-                  Conectare
-                </Button>
-                <Button
-                  onClick={() => {
-                    setAuthModalTab('register');
-                    setShowAuthModal(true);
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6"
-                >
-                  Înregistrare
-                </Button>
+                <Link href="/auth/signin">
+                  <Button
+                    variant="ghost"
+                    className="text-gray-700 hover:text-brand-primary font-medium"
+                  >
+                    Conectare
+                  </Button>
+                </Link>
+                <Link href="/auth/signin">
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6"
+                  >
+                    Înregistrare
+                  </Button>
+                </Link>
               </div>
             )}
           </nav>
@@ -294,20 +293,30 @@ export function Header() {
               </div>
 
               {/* Mobile Auth */}
-              {user ? (
+              {session?.user ? (
                 <div className="mt-6 space-y-2">
                   <div className="flex items-center space-x-2 py-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar || undefined} alt={user.firstName} />
+                      <AvatarImage src={session.user.image || undefined} alt={session.user.name || 'User'} />
                       <AvatarFallback>
-                        {user.firstName?.[0]?.toUpperCase()}{user.lastName?.[0]?.toUpperCase()}
+                        {session.user.name?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">{user.firstName} {user.lastName}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
+                      <p className="font-medium">{session.user.name}</p>
+                      <p className="text-sm text-gray-500">{session.user.email}</p>
                     </div>
                   </div>
+                  {(session.user.role === 'SUPER_ADMIN' || session.user.role === 'ADMIN') && (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => router.push('/admin')}
+                    >
+                      <Shield className="mr-2 h-4 w-4" />
+                      Admin Panel
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     className="w-full justify-start"
@@ -335,38 +344,27 @@ export function Header() {
                 </div>
               ) : (
                 <div className="mt-6 space-y-2">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      setAuthModalTab('login');
-                      setShowAuthModal(true);
-                    }}
-                  >
-                    Conectare
-                  </Button>
-                  <Button
-                    className="w-full bg-brand-primary hover:bg-brand-primary/90"
-                    onClick={() => {
-                      setAuthModalTab('register');
-                      setShowAuthModal(true);
-                    }}
-                  >
-                    Înregistrare
-                  </Button>
+                  <Link href="/auth/signin">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Conectare
+                    </Button>
+                  </Link>
+                  <Link href="/auth/signin">
+                    <Button
+                      className="w-full bg-brand-primary hover:bg-brand-primary/90"
+                    >
+                      Înregistrare
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>
           </div>
         )}
       </header>
-
-      {/* Auth Modal */}
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)}
-        defaultTab={authModalTab}
-      />
     </>
   );
 }
