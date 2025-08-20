@@ -41,7 +41,7 @@ VasileStie.ro este o platformă modernă pentru conectarea clienților cu mește
 
 1. **Clonează repository-ul**
    ```bash
-   git clone https://github.com/USERNAME/vasilestie-ro.git
+   git clone https://github.com/nnoldi-hub/vasilestie-ro.git
    cd vasilestie-ro
    ```
 
@@ -173,7 +173,7 @@ Acest proiect este licențiat sub MIT License - vezi fișierul [LICENSE](LICENSE
 
 - **Website:** [vasilestie.ro](https://vasilestie.ro)
 - **Email:** contact@vasilestie.ro
-- **Issues:** [GitHub Issues](https://github.com/USERNAME/vasilestie-ro/issues)
+- **Issues:** [GitHub Issues](https://github.com/nnoldi-hub/vasilestie-ro/issues)
 
 ## 🙏 Mulțumiri
 

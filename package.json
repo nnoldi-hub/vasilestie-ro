@@ -9,10 +9,10 @@
   "homepage": "https://vasilestie.ro",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/USERNAME/vasilestie-ro.git"
+    "url": "git+https://github.com/nnoldi-hub/vasilestie-ro.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/vasilestie-ro/issues"
+    "url": "https://github.com/nnoldi-hub/vasilestie-ro/issues"
   },
   "scripts": {
     "dev": "next dev",
