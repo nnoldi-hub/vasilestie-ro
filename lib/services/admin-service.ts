@@ -130,7 +130,7 @@ export async function getActivityLogs(filters?: {
   return logs.map(log => ({
     id: log.id,
     userId: log.userId,
-    userName: log.user.name || log.user.email,
+    userName: log.user?.name || log.user?.email || 'Unknown User',
     action: log.action,
     details: log.details || undefined,
     timestamp: log.createdAt,

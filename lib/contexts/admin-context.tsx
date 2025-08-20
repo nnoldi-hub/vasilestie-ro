@@ -180,18 +180,22 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       try {
         const members = await AdminService.getTeamMembers();
         // Convert to the format expected by the context
-        const convertedMembers = members.map(member => ({
+        const convertedMembers: TeamMember[] = members.map(member => ({
           ...member,
           firstName: member.name.split(' ')[0] || member.name,
           lastName: member.name.split(' ')[1] || '',
+          name: member.name,
           avatar: '',
           department: getDepartmentForRole(member.role),
           phone: '',
+          createdAt: member.joinedAt,
+          updatedAt: member.joinedAt,
           hireDate: member.joinedAt,
           salary: 0,
-          permissions: member.permissions
+          permissions: member.permissions,
+          createdBy: 'system' // Default value
         }));
-        dispatch({ type: 'SET_TEAM_MEMBERS', payload: convertedMembers as any[] });
+        dispatch({ type: 'SET_TEAM_MEMBERS', payload: convertedMembers });
       } catch (error) {
         console.error('Error loading team members:', error);
         dispatch({ type: 'SET_ERROR', payload: 'Eroare la încărcarea membrilor echipei' });
@@ -207,19 +211,23 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           role: data.role
         });
         
-        const convertedMember = {
+        const convertedMember: TeamMember = {
           ...newMember,
           firstName: data.firstName,
           lastName: data.lastName,
+          name: `${data.firstName} ${data.lastName}`,
           avatar: '',
           department: getDepartmentForRole(newMember.role),
           phone: data.phone || '',
+          createdAt: newMember.joinedAt, // Map joinedAt to createdAt
+          updatedAt: newMember.joinedAt, // Use same date for updatedAt
           hireDate: newMember.joinedAt,
           salary: 0,
-          permissions: newMember.permissions
+          permissions: newMember.permissions,
+          createdBy: 'system' // Default value - should be current user ID
         };
         
-        dispatch({ type: 'ADD_TEAM_MEMBER', payload: convertedMember as any });
+        dispatch({ type: 'ADD_TEAM_MEMBER', payload: convertedMember });
         return convertedMember;
       } catch (error) {
         console.error('Error creating team member:', error);

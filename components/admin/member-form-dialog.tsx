@@ -53,12 +53,12 @@ export function MemberFormDialog({ open, onOpenChange, member, mode }: MemberFor
     lastName: '',
     email: '',
     phone: '',
-    role: 'suport',
+    role: 'SUPPORT',
     department: '',
     sendWelcomeEmail: true,
   });
 
-  const [selectedRole, setSelectedRole] = useState<UserRole>('suport');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('SUPPORT');
   const [customPermissions, setCustomPermissions] = useState<string[]>([]);
 
   // Reset form when dialog opens/closes or member changes
@@ -80,11 +80,11 @@ export function MemberFormDialog({ open, onOpenChange, member, mode }: MemberFor
           lastName: '',
           email: '',
           phone: '',
-          role: 'suport',
+          role: 'SUPPORT',
           department: '',
           sendWelcomeEmail: true,
         });
-        setSelectedRole('suport');
+        setSelectedRole('SUPPORT');
         setCustomPermissions([]);
       }
     }
