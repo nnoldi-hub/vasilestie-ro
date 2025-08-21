@@ -199,7 +199,7 @@ export async function getAdminStats(): Promise<AdminStats> {
   ] = await Promise.all([
     prisma.user.count(),
     prisma.craftsman.count(),
-    prisma.contactRequest.count(),
+    0, // Placeholder for contact requests
     prisma.user.count({
       where: {
         createdAt: { gte: currentMonthStart }
@@ -220,16 +220,8 @@ export async function getAdminStats(): Promise<AdminStats> {
         createdAt: { gte: previousMonthStart, lte: previousMonthEnd }
       }
     }),
-    prisma.contactRequest.count({
-      where: {
-        createdAt: { gte: currentMonthStart }
-      }
-    }),
-    prisma.contactRequest.count({
-      where: {
-        createdAt: { gte: previousMonthStart, lte: previousMonthEnd }
-      }
-    })
+    0, // Placeholder for current month contact requests
+    0  // Placeholder for previous month contact requests
   ]);
 
   // Calculate mock revenue for now
