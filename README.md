@@ -4,6 +4,8 @@
 
 VasileStie.ro este o platformă modernă pentru conectarea clienților cu meșterii potriviți din România. Găsește rapid și ușor profesioniștii de care ai nevoie pentru casa ta.
 
+<!-- Build timestamp: 2025-08-21 TypeScript fixes deployed -->
+
 ## 🌟 Caracteristici
 
 ### Pentru Clienți
