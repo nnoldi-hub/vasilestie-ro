@@ -9,37 +9,37 @@ export function HowItWorks() {
     {
       step: 1,
       title: 'Caută serviciul',
-      description: 'Descrie ce ai nevoie și alege din sute de meseriași verificați din zona ta.',
+      description: 'Descrie ce ai nevoie și alege din meseriașii verificați cu abonament activ din zona ta.',
       icon: Search,
       color: 'bg-brand-primary/10 text-brand-primary',
       details: [
         'Căutare avansată cu filtre',
-        'Comparare prețuri și recenzii',
-        'Meseriași verificați și asigurați'
+        'Doar meseriași cu abonament activ',
+        'Meseriași verificați și profesioniști'
       ]
     },
     {
       step: 2,
-      title: 'Alege meseriașul',
-      description: 'Compară profilurile, citește recenziile și alege meseriașul potrivit pentru tine.',
+      title: 'Contactează direct',
+      description: 'Trimite cererea de contact direct meseriașului ales - fără intermediari.',
       icon: UserCheck,
       color: 'bg-green-100 text-green-600',
       details: [
-        'Profiluri detaliate cu portofoliu',
-        'Recenzii reale de la clienți',
-        'Prețuri transparente'
+        'Contact direct cu meseriașul',
+        'Fără taxe sau comisioane',
+        'Comunicare rapidă și eficientă'
       ]
     },
     {
       step: 3,
-      title: 'Rezervă serviciul',
-      description: 'Stabilește detaliile lucrării și programează o întâlnire la momentul potrivit.',
+      title: 'Negociază direct',
+      description: 'Discută detaliile, prețul și programul direct cu meseriașul ales.',
       icon: Calendar,
       color: 'bg-brand-accent/10 text-brand-accent',
       details: [
-        'Programare flexibilă',
-        'Comunicare directă',
-        'Plată securizată'
+        'Negociere directă a prețului',
+        'Stabilire program flexibil',
+        'Fără costuri suplimentare'
       ]
     },
     {
@@ -51,7 +51,7 @@ export function HowItWorks() {
       details: [
         'Sistem de rating transparent',
         'Recenzii verificate',
-        'Garanție pentru servicii'
+        'Ajută alți clienți să aleagă'
       ]
     }
   ];
@@ -67,8 +67,8 @@ export function HowItWorks() {
             Cum funcționează VasileStie.ro
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            În doar 4 pași simpli, găsești și rezervi serviciile de care ai nevoie, 
-            cu încredere și transparență totală.
+            În doar 4 pași simpli, contactezi direct meseriașii verificați și negociezi 
+            prețurile fără taxe sau comisioane suplimentare.
           </p>
         </div>
 
@@ -124,15 +124,15 @@ export function HowItWorks() {
               Gata să începi?
             </h3>
             <p className="text-white/80 mb-6 max-w-2xl mx-auto">
-              Alătură-te celor peste 12,000 de clienți mulțumiți care au găsit 
-              meseriașii potriviți prin Mesteras.ro.
+              Alătură-te celor peste 12,000 de clienți mulțumiți care au contactat direct
+              meseriașii verificați prin VasileStie.ro - fără taxe sau comisioane!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="px-8 py-3 bg-white text-brand-primary rounded-lg font-semibold hover:bg-gray-50 transition-colors">
                 Caută un meseriași
               </button>
               <button className="px-8 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-brand-primary transition-colors">
-                Devino meseriași
+                Devino meseriași partner
               </button>
             </div>
           </div>

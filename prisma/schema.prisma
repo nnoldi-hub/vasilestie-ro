@@ -57,7 +57,7 @@ model User {
   sessions      Session[]
   craftsman     Craftsman?
   reviews       Review[]
-  bookings      Booking[]
+  contactRequests ContactRequest[] // Înlocuiește bookings
   adminLogs     AdminLog[]
 }
 
@@ -71,27 +71,32 @@ model VerificationToken {
 
 // Business Models
 model Craftsman {
-  id              String          @id @default(cuid())
-  userId          String          @unique
+  id              String              @id @default(cuid())
+  userId          String              @unique
   businessName    String
   description     String
   phone           String
   address         String
   city            String
   county          String
-  experience      Int // years
-  verified        Boolean         @default(false)
-  rating          Float           @default(0)
-  reviewCount     Int             @default(0)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  experience      Int                 // years
+  verified        Boolean             @default(false)
+  rating          Float               @default(0)
+  reviewCount     Int                 @default(0)
+  subscriptionStatus SubscriptionStatus @default(INACTIVE)
+  subscriptionPlan   SubscriptionPlan    @default(BASIC)
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
   
   // Relations
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   categories      CraftsmanCategory[]
   reviews         Review[]
-  bookings        Booking[]
+  contacts        ContactRequest[]    // Înlocuiește bookings
   portfolio       PortfolioItem[]
+  subscriptionPayments SubscriptionPayment[]
 }
 
 model Category {
@@ -133,20 +138,42 @@ model Review {
   @@unique([userId, craftsmanId])
 }
 
-model Booking {
-  id          String        @id @default(cuid())
-  userId      String
-  craftsmanId String
-  service     String
-  description String
-  status      BookingStatus @default(PENDING)
-  scheduledAt DateTime
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+// Înlocuiește Booking cu ContactRequest (fără plăți prin platformă)
+model ContactRequest {
+  id          String              @id @default(cuid())
+  userId      String              // Client
+  craftsmanId String              // Meseriaș
+  service     String              // Tip serviciu solicitat
+  description String              // Detalii despre lucrare
+  status      ContactStatus       @default(PENDING)
+  clientName  String              // Numele clientului
+  clientPhone String              // Telefonul clientului
+  clientEmail String              // Email-ul clientului
+  location    String?             // Locația unde se execută lucrarea
+  scheduledAt DateTime?           // Data dorită (opțional)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   
   // Relations
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  craftsman   Craftsman     @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  craftsman   Craftsman           @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
+}
+
+// Sistem de abonamente pentru meseriași
+model SubscriptionPayment {
+  id              String              @id @default(cuid())
+  craftsmanId     String
+  amount          Float               // Suma plătită
+  plan            SubscriptionPlan    // Planul de abonament
+  paymentMethod   String              // Metoda de plată (card, transfer, etc.)
+  paymentDate     DateTime            @default(now())
+  validFrom       DateTime            // Data de început
+  validUntil      DateTime            // Data de sfârșit
+  status          PaymentStatus       @default(PENDING)
+  invoiceNumber   String?             // Numărul facturii
+  
+  // Relations
+  craftsman       Craftsman           @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
 }
 
 model PortfolioItem {
@@ -182,12 +209,34 @@ enum UserRole {
   SUPPORT
 }
 
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
+enum ContactStatus {
+  PENDING       // În așteptare (clientul a trimis cererea)
+  VIEWED        // Văzută de meseriaș
+  RESPONDED     // Meseriașul a răspuns
+  ACCEPTED      // Meseriașul a acceptat lucrarea
+  IN_PROGRESS   // Lucrarea este în desfășurare
+  COMPLETED     // Lucrarea este terminată
+  CANCELLED     // Anulată
+}
+
+enum SubscriptionStatus {
+  INACTIVE      // Fără abonament activ
+  ACTIVE        // Abonament activ
+  EXPIRED       // Abonament expirat
+  SUSPENDED     // Suspendat (pentru neplată)
+}
+
+enum SubscriptionPlan {
+  BASIC         // Plan de bază (5 contacte/lună)
+  PREMIUM       // Plan premium (20 contacte/lună)
+  PROFESSIONAL  // Plan profesional (contacte nelimitate)
+}
+
+enum PaymentStatus {
+  PENDING       // În așteptare
+  COMPLETED     // Plătit
+  FAILED        // Eșuat
+  REFUNDED      // Rambursat
 }
 
 enum AdminAction {
@@ -196,8 +245,11 @@ enum AdminAction {
   USER_DELETED
   CRAFTSMAN_VERIFIED
   CRAFTSMAN_REJECTED
+  CRAFTSMAN_SUBSCRIBED
+  SUBSCRIPTION_RENEWED
+  SUBSCRIPTION_CANCELLED
   REVIEW_MODERATED
-  BOOKING_UPDATED
+  CONTACT_REQUEST_UPDATED
   CATEGORY_CREATED
   CATEGORY_UPDATED
   SYSTEM_CONFIG_CHANGED
