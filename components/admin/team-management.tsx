@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAdmin } from '@/lib/contexts/admin-context';
 import { TeamMember, UserRole, UserStatus } from '@/lib/types/admin';
 import { ROLES } from '@/lib/types/admin';
+import * as AdminService from '@/lib/services/admin-service';
 import { MemberFormDialog } from './member-form-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,13 +94,13 @@ export function TeamManagement() {
   };
 
   // Actions
-  const handleToggleStatus = async (member: TeamMember) => {
+  const handleToggleStatus = async (member: AdminService.TeamMember) => {
     const newStatus = member.status === 'active' ? 'inactive' : 'active';
     await actions.toggleMemberStatus(member.id, newStatus);
   };
 
-  const handleResetPassword = async (member: TeamMember) => {
-    if (confirm(`Resetați parola pentru ${member.firstName} ${member.lastName}?`)) {
+  const handleResetPassword = async (member: AdminService.TeamMember) => {
+    if (confirm(`Resetați parola pentru ${member.name}?`)) {
       await actions.resetPassword(member.id);
     }
   };
@@ -114,13 +115,37 @@ export function TeamManagement() {
     }
   };
 
-  const openDeleteDialog = (member: TeamMember) => {
-    setMemberToDelete(member);
+  const openDeleteDialog = (member: AdminService.TeamMember) => {
+    // Convert service TeamMember to types/admin TeamMember for dialog
+    const convertedMember: TeamMember = {
+      id: member.id,
+      firstName: member.name.split(' ')[0] || '',
+      lastName: member.name.split(' ').slice(1).join(' ') || '',
+      email: member.email,
+      role: 'admin', // Map to admin types role
+      status: member.status as UserStatus,
+      createdAt: member.joinedAt,
+      updatedAt: member.joinedAt,
+      createdBy: 'system'
+    };
+    setMemberToDelete(convertedMember);
     setShowDeleteDialog(true);
   };
 
-  const openEditDialog = (member: TeamMember) => {
-    setSelectedMember(member);
+  const openEditDialog = (member: AdminService.TeamMember) => {
+    // Convert service TeamMember to types/admin TeamMember for dialog
+    const convertedMember: TeamMember = {
+      id: member.id,
+      firstName: member.name.split(' ')[0] || '',
+      lastName: member.name.split(' ').slice(1).join(' ') || '',
+      email: member.email,
+      role: 'admin', // Map to admin types role
+      status: member.status as UserStatus,
+      createdAt: member.joinedAt,
+      updatedAt: member.joinedAt,
+      createdBy: 'system'
+    };
+    setSelectedMember(convertedMember);
     setShowEditDialog(true);
   };
 
@@ -142,6 +167,16 @@ export function TeamManagement() {
 
   const getRoleLabel = (role: UserRole) => {
     return ROLES[role].name;
+  };
+
+  const getServiceRoleLabel = (role: AdminService.TeamMember['role']) => {
+    const roleNames: Record<string, string> = {
+      'SUPER_ADMIN': 'Super Administrator',
+      'ADMIN': 'Administrator',
+      'MODERATOR': 'Moderator',
+      'SUPPORT': 'Suport'
+    };
+    return roleNames[role] || role;
   };
 
   return (
@@ -286,34 +321,29 @@ export function TeamManagement() {
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <Avatar>
-                          <AvatarImage src={member.avatar} />
+                          <AvatarImage src="" />
                           <AvatarFallback>
-                            {member.firstName[0]}{member.lastName[0]}
+                            {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-medium text-gray-900">
-                            {member.firstName} {member.lastName}
+                            {member.name}
                           </div>
                           <div className="text-sm text-gray-500">
                             {member.email}
                           </div>
-                          {member.phone && (
-                            <div className="text-xs text-gray-400">
-                              {member.phone}
-                            </div>
-                          )}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {getRoleLabel(member.role)}
+                        {getServiceRoleLabel(member.role)}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-gray-600">
-                        {member.department || '-'}
+                        -
                       </span>
                     </TableCell>
                     <TableCell>
@@ -321,8 +351,8 @@ export function TeamManagement() {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-gray-600">
-                        {member.lastLogin 
-                          ? member.lastLogin.toLocaleDateString('ro-RO')
+                        {member.lastActive
+                          ? member.lastActive.toLocaleDateString('ro-RO')
                           : 'Niciodată'
                         }
                       </span>

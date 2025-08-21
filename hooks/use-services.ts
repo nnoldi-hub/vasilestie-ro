@@ -410,7 +410,7 @@ export function useServices() {
   }, []);
 
   const createService = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt' | 'craftsman'>) => {
-    if (!user || user.role !== 'craftsman') {
+    if (!user || user.role !== 'CRAFTSMAN') {
       return { success: false, error: 'Nu ai permisiunea să creezi servicii' };
     }
 

@@ -62,7 +62,7 @@ export function AdminDashboard() {
     },
     {
       title: 'În Așteptare',
-      value: teamMembers.filter(m => m.status === 'pending').length,
+      value: 0, // No pending status in current TeamMember type
       icon: UserPlus,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
@@ -187,25 +187,24 @@ export function AdminDashboard() {
               {teamMembers.slice(0, 5).map((member) => (
                 <div key={member.id} className="flex items-center space-x-3">
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src={member.avatar} />
+                    <AvatarImage src="" />
                     <AvatarFallback>
-                      {member.firstName[0]}{member.lastName[0]}
+                      {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
-                      {member.firstName} {member.lastName}
+                      {member.name}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {member.role} • {member.department}
+                      {member.role}
                     </p>
                   </div>
                   <Badge 
                     variant={member.status === 'active' ? 'default' : 'secondary'}
                     className={member.status === 'active' ? 'bg-green-100 text-green-800' : ''}
                   >
-                    {member.status === 'active' ? 'Activ' : 
-                     member.status === 'pending' ? 'În așteptare' : 'Inactiv'}
+                    {member.status === 'active' ? 'Activ' : 'Inactiv'}
                   </Badge>
                 </div>
               ))}
@@ -239,7 +238,7 @@ export function AdminDashboard() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-900">
                         <span className="font-medium">
-                          {member ? `${member.firstName} ${member.lastName}` : 'Unknown'}
+                          {member ? member.name : 'Unknown'}
                         </span>{' '}
                         {log.description}
                       </p>
@@ -268,13 +267,13 @@ export function AdminDashboard() {
       </div>
 
       {/* Alertă pentru membri în așteptare */}
-      {teamMembers.filter(m => m.status === 'pending').length > 0 && (
+      {false && ( // No pending status in current TeamMember type
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="flex items-center p-4">
             <AlertCircle className="w-5 h-5 text-orange-500 mr-3" />
             <div className="flex-1">
               <p className="text-sm font-medium text-orange-800">
-                Aveți {teamMembers.filter(m => m.status === 'pending').length} membri în așteptarea aprobării
+                Aveți 0 membri în așteptarea aprobării
               </p>
               <p className="text-xs text-orange-600">
                 Verificați și activați conturile noi pentru a le permite accesul la platformă

@@ -128,12 +128,22 @@ export function ActivitySection() {
 
   const getMemberName = (userId: string) => {
     const member = teamMembers.find(m => m.id === userId);
-    return member ? `${member.firstName} ${member.lastName}` : 'Necunoscut';
+    return member ? member.name : 'Necunoscut';
   };
 
   const getMemberRole = (userId: string) => {
     const member = teamMembers.find(m => m.id === userId);
-    return member ? ROLES[member.role].name : '';
+    if (!member) return '';
+    
+    // Map service roles to display names
+    const roleNames: Record<string, string> = {
+      'SUPER_ADMIN': 'Super Administrator',
+      'ADMIN': 'Administrator',
+      'MODERATOR': 'Moderator',
+      'SUPPORT': 'Suport'
+    };
+    
+    return roleNames[member.role] || member.role;
   };
 
   const formatTimestamp = (timestamp: Date) => {
@@ -303,7 +313,7 @@ export function ActivitySection() {
                   <SelectItem value="all">Toți utilizatorii</SelectItem>
                   {teamMembers.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
-                      {member.firstName} {member.lastName}
+                      {member.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
