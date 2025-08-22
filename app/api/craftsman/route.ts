@@ -47,7 +47,7 @@ export async function GET() {
             status: 'COMPLETED',
           },
           orderBy: {
-            createdAt: 'desc'
+            paymentDate: 'desc'
           },
           take: 1
         },

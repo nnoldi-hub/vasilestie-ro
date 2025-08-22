@@ -27,12 +27,12 @@ function ProfileContent() {
   if (!user) return null;
 
   // Dacă e meseriaș, redirecționează la pagina lui specifică
-  if (user.role === 'CRAFTSMAN') {
+  if (user.role === ('CRAFTSMAN' as any)) {
     redirect('/mesterias/profil');
   }
 
   const handleEditProfile = () => {
-    if (user.role === 'CRAFTSMAN') {
+    if (user.role === ('CRAFTSMAN' as any)) {
       redirect('/mesterias/profil');
     } else {
       // Pentru utilizatori generali, eventual o pagină de editare separată
@@ -68,8 +68,8 @@ function ProfileContent() {
                 </CardTitle>
                 <CardDescription>
                   <div className="flex items-center justify-center gap-2">
-                    <Badge variant={user.role === 'CRAFTSMAN' ? 'default' : 'secondary'}>
-                      {user.role === 'CRAFTSMAN' ? 'Meseriași' : 'Client'}
+                    <Badge variant={user.role === ('CRAFTSMAN' as any) ? 'default' : 'secondary'}>
+                      {user.role === ('CRAFTSMAN' as any) ? 'Meseriași' : 'Client'}
                     </Badge>
                   </div>
                 </CardDescription>
