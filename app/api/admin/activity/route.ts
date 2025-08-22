@@ -18,15 +18,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId') || undefined;
-    const action = searchParams.get('action') || undefined;
-    const dateFrom = searchParams.get('dateFrom') 
-      ? new Date(searchParams.get('dateFrom')!) 
-      : undefined;
-    const dateTo = searchParams.get('dateTo') 
-      ? new Date(searchParams.get('dateTo')!) 
-      : undefined;
+    // Use nextUrl.searchParams instead of new URL(request.url)
+    const userId = request.nextUrl.searchParams.get('userId') || undefined;
+    const action = request.nextUrl.searchParams.get('action') || undefined;
+    const dateFromParam = request.nextUrl.searchParams.get('dateFrom');
+    const dateToParam = request.nextUrl.searchParams.get('dateTo');
+    
+    const dateFrom = dateFromParam ? new Date(dateFromParam) : undefined;
+    const dateTo = dateToParam ? new Date(dateToParam) : undefined;
 
     const logs = await AdminService.getActivityLogs({
       userId,

@@ -6,12 +6,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const category = searchParams.get('category');
-    const search = searchParams.get('search');
-    const featured = searchParams.get('featured');
+    const page = parseInt(request.nextUrl.searchParams.get('page') || '1');
+    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '10');
+    const category = request.nextUrl.searchParams.get('category');
+    const search = request.nextUrl.searchParams.get('search');
+    const featured = request.nextUrl.searchParams.get('featured');
     
     const skip = (page - 1) * limit;
     
