@@ -59,6 +59,10 @@ model User {
   reviews       Review[]
   contactRequests ContactRequest[] // Înlocuiește bookings
   adminLogs     AdminLog[]
+  
+  // Blog relations
+  blogPosts     BlogPost[] @relation("BlogAuthor")
+  blogComments  BlogComment[] @relation("BlogComments")
 }
 
 model VerificationToken {
@@ -255,4 +259,127 @@ enum AdminAction {
   SYSTEM_CONFIG_CHANGED
   LOGIN
   LOGOUT
+}
+
+// Blog Models
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String?
+  content     String
+  featuredImage String?
+  published   Boolean  @default(false)
+  featured    Boolean  @default(false)
+  views       Int      @default(0)
+  readTime    Int?     // minutes
+  
+  // Author relationship
+  authorId    String
+  author      User     @relation("BlogAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Category relationship
+  categoryId  String
+  category    BlogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  // Tags relationship (many-to-many)
+  tags        BlogTag[]
+  
+  // Comments
+  comments    BlogComment[]
+  
+  // SEO fields
+  metaTitle       String?
+  metaDescription String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  publishedAt DateTime?
+  
+  @@map("blog_posts")
+}
+
+model BlogCategory {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  color       String?    // hex color for UI
+  icon        String?    // emoji or icon name
+  
+  posts       BlogPost[]
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  @@map("blog_categories")
+}
+
+model BlogTag {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  
+  posts BlogPost[]
+  
+  createdAt DateTime @default(now())
+  
+  @@map("blog_tags")
+}
+
+model BlogComment {
+  id        String   @id @default(cuid())
+  content   String
+  approved  Boolean  @default(false)
+  
+  // Author (can be registered user or guest)
+  userId    String?
+  user      User?    @relation("BlogComments", fields: [userId], references: [id], onDelete: SetNull)
+  
+  // Guest author info (if not registered)
+  guestName    String?
+  guestEmail   String?
+  guestWebsite String?
+  
+  // Post relationship
+  postId    String
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  // Reply system (self-referencing)
+  parentId  String?
+  parent    BlogComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   BlogComment[] @relation("CommentReplies")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("blog_comments")
+}
+
+model Newsletter {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  subscribed  Boolean  @default(true)
+  confirmed   Boolean  @default(false)
+  
+  // Subscription preferences
+  frequency   NewsletterFrequency @default(WEEKLY)
+  categories  String[] // Array of category IDs user is interested in
+  
+  // Tracking
+  confirmToken String?  @unique
+  unsubscribeToken String? @unique
+  
+  subscribedAt DateTime @default(now())
+  confirmedAt  DateTime?
+  lastEmailSent DateTime?
+  
+  @@map("newsletter_subscriptions")
+}
+
+enum NewsletterFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  NEVER
 }

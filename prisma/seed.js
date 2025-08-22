@@ -100,6 +100,17 @@ async function main() {
 
   console.log('✅ Users created!')
 
+  // Create craftsman test user
+  const craftsmanTestUser = await prisma.user.create({
+    data: {
+      name: 'Test Meseriaș',
+      email: 'mester@vasilestie.ro',
+      password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // mester123
+      role: 'CRAFTSMAN',
+      emailVerified: new Date()
+    }
+  })
+
   // Create craftsman users first
   const craftsmanUsers = await Promise.all([
     prisma.user.create({
@@ -130,6 +141,27 @@ async function main() {
       }
     })
   ])
+
+  // Create test craftsman profile
+  const testCraftsman = await prisma.craftsman.create({
+    data: {
+      userId: craftsmanTestUser.id,
+      businessName: 'Test Meseriaș SRL',
+      description: 'Cont de test pentru meseriaș',
+      phone: '0722999888',
+      address: 'Str. Test nr. 1',
+      city: 'București',
+      county: 'Ilfov',
+      experience: 5,
+      rating: 4.5,
+      reviewCount: 10,
+      verified: true,
+      subscriptionStatus: 'ACTIVE',
+      subscriptionPlan: 'BASIC',
+      subscriptionStartDate: new Date('2024-12-01'),
+      subscriptionEndDate: new Date('2025-01-01')
+    }
+  })
 
   // Create craftsmen
   const craftsmen = await Promise.all([

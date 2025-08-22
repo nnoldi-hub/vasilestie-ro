@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,7 @@ interface BlogPost {
     id: string;
     name: string;
     slug: string;
-  }> | null;
+  }>;
   _count?: {
     comments: number;
   };
@@ -62,7 +62,16 @@ export default function BlogPage() {
   const [subscribing, setSubscribing] = useState(false);
 
   // Fetch posts
-  const fetchPosts = useCallback(async () => {
+  useEffect(() => {
+    fetchPosts();
+  }, [page, selectedCategory, searchTerm]);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchPosts = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -76,8 +85,8 @@ export default function BlogPage() {
       const data = await response.json();
 
       if (data.success) {
-        setPosts(data.data.posts);
-        setTotalPages(data.data.pagination.totalPages);
+        setPosts(data.posts);
+        setTotalPages(data.pagination.totalPages);
       } else {
         toast.error('Eroare la încărcarea articolelor');
       }
@@ -87,32 +96,20 @@ export default function BlogPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, selectedCategory, searchTerm]);
+  };
 
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
-
-  const fetchCategories = useCallback(async () => {
+  const fetchCategories = async () => {
     try {
       const response = await fetch('/api/blog/categories');
       const data = await response.json();
 
       if (data.success) {
-        const filtered = data.data.filter((cat: any) => cat.slug !== 'toate');
-        setCategories(filtered);
-      } else {
-        toast.error('Eroare la încărcarea categoriilor');
+        setCategories(data.categories);
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
-  }, []);
-
-  // Fetch categories on mount
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+  };
 
   const handleNewsletterSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,8 +166,8 @@ export default function BlogPage() {
     });
   };
 
-  const featuredPost = posts?.find(post => post.featured);
-  const regularPosts = posts?.filter(post => !post.featured) || [];
+  const featuredPost = posts.find(post => post.featured);
+  const regularPosts = posts.filter(post => !post.featured);
 
   return (
     <div className="py-20">
@@ -249,9 +246,9 @@ export default function BlogPage() {
                 onClick={() => handleCategoryFilter('')}
                 className={!selectedCategory ? "bg-blue-600" : ""}
               >
-                Toate ({categories?.find(cat => cat.slug === 'toate')?._count.posts || 0})
+                Toate ({categories.reduce((sum, cat) => sum + cat._count.posts, 0)})
               </Button>
-              {categories?.filter(cat => cat.slug !== 'toate').map((category) => (
+              {categories.map((category) => (
                 <Button
                   key={category.id}
                   variant={selectedCategory === category.slug ? "default" : "outline"}
@@ -294,7 +291,7 @@ export default function BlogPage() {
                             {post.category.name}
                           </Badge>
                         )}
-                        {post.tags && post.tags.length > 0 && (
+                        {post.tags.length > 0 && (
                           <div className="flex gap-1">
                             {post.tags.slice(0, 2).map((tag) => (
                               <Badge key={tag.id} variant="secondary" className="text-xs">
@@ -343,7 +340,7 @@ export default function BlogPage() {
             )}
 
             {/* Empty State */}
-            {!loading && posts?.length === 0 && (
+            {!loading && regularPosts.length === 0 && !featuredPost && (
               <div className="text-center py-12">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   Nu au fost găsite articole
@@ -460,7 +457,7 @@ export default function BlogPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {categories?.filter(cat => cat.slug !== 'toate').map((category) => (
+                  {categories.map((category) => (
                     <div 
                       key={category.id} 
                       onClick={() => handleCategoryFilter(category.slug)}

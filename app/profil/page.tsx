@@ -26,6 +26,20 @@ function ProfileContent() {
 
   if (!user) return null;
 
+  // Dacă e meseriaș, redirecționează la pagina lui specifică
+  if (user.role === 'CRAFTSMAN') {
+    redirect('/mesterias/profil');
+  }
+
+  const handleEditProfile = () => {
+    if (user.role === 'CRAFTSMAN') {
+      redirect('/mesterias/profil');
+    } else {
+      // Pentru utilizatori generali, eventual o pagină de editare separată
+      alert('Funcționalitatea de editare va fi disponibilă în curând!');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -96,7 +110,10 @@ function ProfileContent() {
                 </div>
 
                 <div className="pt-6 border-t">
-                  <Button className="w-full md:w-auto">
+                  <Button 
+                    className="w-full md:w-auto"
+                    onClick={handleEditProfile}
+                  >
                     <Settings className="h-4 w-4 mr-2" />
                     Editează profilul
                   </Button>

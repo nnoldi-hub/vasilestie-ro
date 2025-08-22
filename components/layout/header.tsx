@@ -177,14 +177,29 @@ export function Header() {
                       <span>Admin Panel</span>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => router.push('/profil')}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profil</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/comenzi')}>
-                    <Hammer className="mr-2 h-4 w-4" />
-                    <span>Comenzile mele</span>
-                  </DropdownMenuItem>
+                  {session.user.role === 'CRAFTSMAN' ? (
+                    <>
+                      <DropdownMenuItem onClick={() => router.push('/mesterias/dashboard')}>
+                        <Hammer className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push('/mesterias/profil')}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profilul meu</span>
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onClick={() => router.push('/profil')}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profil</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push('/comenzi')}>
+                        <Hammer className="mr-2 h-4 w-4" />
+                        <span>Comenzile mele</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuItem>
                     <Bell className="mr-2 h-4 w-4" />
                     <span>Notificări</span>
@@ -317,22 +332,45 @@ export function Header() {
                       Admin Panel
                     </Button>
                   )}
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => router.push('/profil')}
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    Profil
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => router.push('/comenzi')}
-                  >
-                    <Hammer className="mr-2 h-4 w-4" />
-                    Comenzile mele
-                  </Button>
+                  {session.user.role === 'CRAFTSMAN' ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => router.push('/mesterias/dashboard')}
+                      >
+                        <Hammer className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => router.push('/mesterias/profil')}
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        Profilul meu
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => router.push('/profil')}
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        Profil
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => router.push('/comenzi')}
+                      >
+                        <Hammer className="mr-2 h-4 w-4" />
+                        Comenzile mele
+                      </Button>
+                    </>
+                  )}
                   <Button
                     variant="outline"
                     className="w-full justify-start"

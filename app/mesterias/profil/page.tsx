@@ -1,124 +1,200 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Camera, MapPin, Phone, Mail, Globe, Star, Plus, X, Check } from 'lucide-react';
+import { ArrowLeft, Camera, Star, Plus, X, Check, Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface Service {
+interface CraftsmanData {
   id: string;
-  name: string;
+  businessName: string;
   description: string;
-  price: string;
-  duration: string;
-}
-
-interface WorkHours {
-  day: string;
-  isOpen: boolean;
-  openTime: string;
-  closeTime: string;
+  phone: string;
+  address: string;
+  city: string;
+  county: string;
+  experience: number;
+  verified: boolean;
+  rating: number;
+  reviewCount: number;
+  subscriptionStatus: string;
+  subscriptionPlan: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  categories: Array<{
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    }
+  }>;
+  portfolio: Array<{
+    id: string;
+    title: string;
+    description: string;
+    imageUrl: string;
+  }>;
+  contacts: Array<{
+    id: string;
+    service: string;
+    status: string;
+    clientName: string;
+    createdAt: string;
+  }>;
+  reviews: Array<{
+    id: string;
+    rating: number;
+    comment: string;
+    user: { name: string };
+    createdAt: string;
+  }>;
 }
 
 export default function ProfilMesterias() {
+  const { data: session, status } = useSession();
   const router = useRouter();
+  
+  const [craftsmanData, setCraftsmanData] = useState<CraftsmanData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [activeTab, setActiveTab] = useState('general');
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Mock data - în realitate ar veni din API
-  const [profile, setProfile] = useState({
-    name: 'Ion Popescu',
-    email: 'ion.popescu@example.com',
-    phone: '+40 721 234 567',
-    profession: 'Electrician',
-    experience: '8 ani',
-    description: 'Electrician cu experiență în instalații rezidențiale și comerciale. Lucrez cu cele mai moderne echipamente și respect toate normele de siguranță.',
-    location: 'București, Sector 1',
-    website: '',
-    profileImage: '',
-    isAvailable: true,
-    rating: 4.8,
-    completedJobs: 127,
-    responseTime: '2 ore',
-    zones: ['Sector 1', 'Sector 2', 'Centrul Vechi']
-  });
-
-  const [services, setServices] = useState<Service[]>([
-    {
-      id: '1',
-      name: 'Instalații electrice noi',
-      description: 'Instalații complete pentru apartamente și case',
-      price: '150-300 RON/mp',
-      duration: '1-3 zile'
-    },
-    {
-      id: '2',
-      name: 'Reparații și întreținere',
-      description: 'Reparații prize, întrerupătoare, siguranțe',
-      price: '50-150 RON',
-      duration: '1-2 ore'
-    }
-  ]);
-
-  const [workHours, setWorkHours] = useState<WorkHours[]>([
-    { day: 'Luni', isOpen: true, openTime: '08:00', closeTime: '18:00' },
-    { day: 'Marți', isOpen: true, openTime: '08:00', closeTime: '18:00' },
-    { day: 'Miercuri', isOpen: true, openTime: '08:00', closeTime: '18:00' },
-    { day: 'Joi', isOpen: true, openTime: '08:00', closeTime: '18:00' },
-    { day: 'Vineri', isOpen: true, openTime: '08:00', closeTime: '18:00' },
-    { day: 'Sâmbătă', isOpen: true, openTime: '09:00', closeTime: '15:00' },
-    { day: 'Duminică', isOpen: false, openTime: '09:00', closeTime: '15:00' }
-  ]);
-
-  const [newService, setNewService] = useState<Omit<Service, 'id'>>({
+  // Form data pentru editare
+  const [formData, setFormData] = useState({
     name: '',
+    businessName: '',
     description: '',
-    price: '',
-    duration: ''
+    phone: '',
+    address: '',
+    city: '',
+    county: '',
+    experience: 0
   });
+
+  // Încarcă datele meseriaș-ului
+  useEffect(() => {
+    if (status === 'loading') return;
+    
+    if (!session || session.user.role !== 'CRAFTSMAN') {
+      router.push('/auth/signin');
+      return;
+    }
+
+    fetchCraftsmanData();
+  }, [session, status, router]);
+
+  const fetchCraftsmanData = async () => {
+    try {
+      const response = await fetch('/api/craftsman');
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Eroare la încărcarea datelor');
+      }
+
+      setCraftsmanData(result.data);
+      
+      // Populează formularul cu datele existente
+      setFormData({
+        name: result.data.user.name || '',
+        businessName: result.data.businessName || '',
+        description: result.data.description || '',
+        phone: result.data.phone || '',
+        address: result.data.address || '',
+        city: result.data.city || '',
+        county: result.data.county || '',
+        experience: result.data.experience || 0
+      });
+
+    } catch (error: any) {
+      setError(error.message || 'Eroare la încărcarea profilului');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
-    setIsLoading(true);
-    // Simulăm salvarea profilului
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    alert('Profilul a fost actualizat cu succes!');
-  };
+    setIsSaving(true);
+    setError('');
+    setSuccess('');
 
-  const addService = () => {
-    if (newService.name && newService.description && newService.price) {
-      const service: Service = {
-        id: Date.now().toString(),
-        ...newService
-      };
-      setServices([...services, service]);
-      setNewService({ name: '', description: '', price: '', duration: '' });
+    try {
+      const response = await fetch('/api/craftsman', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Eroare la actualizarea profilului');
+      }
+
+      setSuccess('Profilul a fost actualizat cu succes!');
+      
+      // Refresh datele
+      await fetchCraftsmanData();
+      
+      // Șterge mesajul de succes după 3 secunde
+      setTimeout(() => setSuccess(''), 3000);
+
+    } catch (error: any) {
+      setError(error.message || 'Eroare la salvarea profilului');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const removeService = (id: string) => {
-    setServices(services.filter(service => service.id !== id));
-  };
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Se încarcă profilul...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const updateWorkHours = (index: number, field: keyof WorkHours, value: any) => {
-    const updated = [...workHours];
-    updated[index] = { ...updated[index], [field]: value };
-    setWorkHours(updated);
-  };
+  if (error && !craftsmanData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-6">
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <Button 
+              onClick={() => router.push('/auth/signin')} 
+              className="w-full mt-4"
+            >
+              Înapoi la autentificare
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  const tabs = [
-    { id: 'general', name: 'Informații generale', icon: '📋' },
-    { id: 'services', name: 'Servicii oferite', icon: '🔧' },
-    { id: 'schedule', name: 'Program de lucru', icon: '📅' },
-    { id: 'zones', name: 'Zone de acoperire', icon: '🗺️' }
-  ];
+  if (!craftsmanData) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -139,12 +215,14 @@ export default function ProfilMesterias() {
               <h1 className="text-2xl font-bold text-gray-900">Profilul meu</h1>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                <Check className="h-3 w-3 mr-1" />
-                Verificat
-              </Badge>
-              <Badge variant={profile.isAvailable ? "default" : "secondary"}>
-                {profile.isAvailable ? 'Disponibil' : 'Indisponibil'}
+              {craftsmanData.verified && (
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  <Check className="h-3 w-3 mr-1" />
+                  Verificat
+                </Badge>
+              )}
+              <Badge variant={craftsmanData.subscriptionStatus === 'ACTIVE' ? "default" : "secondary"}>
+                {craftsmanData.subscriptionStatus === 'ACTIVE' ? 'Activ' : 'Inactiv'}
               </Badge>
             </div>
           </div>
@@ -161,17 +239,9 @@ export default function ProfilMesterias() {
                 <div className="text-center mb-6">
                   <div className="relative inline-block">
                     <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      {profile.profileImage ? (
-                        <img 
-                          src={profile.profileImage} 
-                          alt={profile.name}
-                          className="w-24 h-24 rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-2xl font-bold text-blue-600">
-                          {profile.name.charAt(0)}
-                        </span>
-                      )}
+                      <span className="text-2xl font-bold text-blue-600">
+                        {craftsmanData.user.name?.charAt(0) || 'M'}
+                      </span>
                     </div>
                     <Button
                       size="sm"
@@ -180,354 +250,277 @@ export default function ProfilMesterias() {
                       <Camera className="h-4 w-4" />
                     </Button>
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">{profile.name}</h2>
-                  <p className="text-gray-600">{profile.profession}</p>
+                  <h2 className="text-xl font-bold text-gray-900">{craftsmanData.user.name}</h2>
+                  <p className="text-gray-600">{craftsmanData.businessName}</p>
                   <div className="flex items-center justify-center space-x-1 mt-2">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{profile.rating}</span>
-                    <span className="text-gray-500">({profile.completedJobs} lucrări)</span>
+                    <span className="font-medium">{craftsmanData.rating.toFixed(1)}</span>
+                    <span className="text-gray-500">({craftsmanData.reviewCount} recenzii)</span>
                   </div>
                 </div>
 
-                {/* Navigation */}
-                <nav className="space-y-2">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                        activeTab === tab.id
-                          ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <span>{tab.icon}</span>
-                      <span className="text-sm">{tab.name}</span>
-                    </button>
-                  ))}
-                </nav>
+                {/* Statistics */}
+                <div className="space-y-3">
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-gray-900">{craftsmanData.experience}</div>
+                    <div className="text-sm text-gray-500">Ani experiență</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-gray-900">{craftsmanData.contacts.length}</div>
+                    <div className="text-sm text-gray-500">Cereri primite</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-gray-900">{craftsmanData.categories.length}</div>
+                    <div className="text-sm text-gray-500">Categorii servicii</div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* General Information */}
-            {activeTab === 'general' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Informații generale</CardTitle>
-                  <CardDescription>
-                    Actualizează informațiile tale de bază care vor fi vizibile clienților
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Messages */}
+            {error && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            {success && (
+              <Alert className="mb-6 border-green-200 bg-green-50 text-green-800">
+                <AlertDescription>{success}</AlertDescription>
+              </Alert>
+            )}
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="general">Informații generale</TabsTrigger>
+                <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+                <TabsTrigger value="reviews">Recenzii</TabsTrigger>
+              </TabsList>
+
+              {/* General Information */}
+              <TabsContent value="general">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Informații generale</CardTitle>
+                    <CardDescription>
+                      Actualizează informațiile tale de bază care vor fi vizibile clienților
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Nume complet *</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          placeholder="Numele tău complet"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="businessName">Numele afacerii *</Label>
+                        <Input
+                          id="businessName"
+                          value={formData.businessName}
+                          onChange={(e) => setFormData({...formData, businessName: e.target.value})}
+                          placeholder="Ex: Instalații Popescu SRL"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Telefon *</Label>
+                        <Input
+                          id="phone"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          placeholder="+40 722 123 456"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="experience">Experiență (ani)</Label>
+                        <Input
+                          id="experience"
+                          type="number"
+                          value={formData.experience}
+                          onChange={(e) => setFormData({...formData, experience: parseInt(e.target.value) || 0})}
+                          placeholder="5"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="city">Oraș *</Label>
+                        <Input
+                          id="city"
+                          value={formData.city}
+                          onChange={(e) => setFormData({...formData, city: e.target.value})}
+                          placeholder="București"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="county">Județ</Label>
+                        <Input
+                          id="county"
+                          value={formData.county}
+                          onChange={(e) => setFormData({...formData, county: e.target.value})}
+                          placeholder="Ilfov"
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="name">Nume complet *</Label>
+                      <Label htmlFor="address">Adresă completă</Label>
                       <Input
-                        id="name"
-                        value={profile.name}
-                        onChange={(e) => setProfile({...profile, name: e.target.value})}
+                        id="address"
+                        value={formData.address}
+                        onChange={(e) => setFormData({...formData, address: e.target.value})}
+                        placeholder="Strada Exemplu, nr. 10, Sector 1"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="profession">Meserie *</Label>
-                      <Select value={profile.profession} onValueChange={(value) => setProfile({...profile, profession: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Electrician">Electrician</SelectItem>
-                          <SelectItem value="Instalator">Instalator</SelectItem>
-                          <SelectItem value="Dulgherie">Dulgherie</SelectItem>
-                          <SelectItem value="Zugrav">Zugrav</SelectItem>
-                          <SelectItem value="Designer">Designer</SelectItem>
-                          <SelectItem value="Mecanic">Mecanic</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Telefon *</Label>
-                      <Input
-                        id="phone"
-                        value={profile.phone}
-                        onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                      <Label htmlFor="description">Descrierea serviciilor *</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                        rows={4}
+                        placeholder="Descrie experiența ta, specialitățile și ce te face special. Ex: Meseriaș cu experiență de 15 ani în instalații sanitare și încălzire..."
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={profile.email}
-                        onChange={(e) => setProfile({...profile, email: e.target.value})}
-                        disabled
-                        className="bg-gray-50"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="location">Locație *</Label>
-                      <Input
-                        id="location"
-                        value={profile.location}
-                        onChange={(e) => setProfile({...profile, location: e.target.value})}
-                        placeholder="București, Sector 1"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="experience">Experiență</Label>
-                      <Input
-                        id="experience"
-                        value={profile.experience}
-                        onChange={(e) => setProfile({...profile, experience: e.target.value})}
-                        placeholder="5 ani"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="website">Website (opțional)</Label>
-                    <Input
-                      id="website"
-                      value={profile.website}
-                      onChange={(e) => setProfile({...profile, website: e.target.value})}
-                      placeholder="https://www.example.com"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Descriere *</Label>
-                    <Textarea
-                      id="description"
-                      value={profile.description}
-                      onChange={(e) => setProfile({...profile, description: e.target.value})}
-                      rows={4}
-                      placeholder="Descrie experiența ta, specialitățile și ce te face special..."
-                    />
-                    <p className="text-sm text-gray-500">
-                      {profile.description.length}/500 caractere
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-2">
-                      <Label>Disponibilitate</Label>
-                      <p className="text-sm text-gray-600">
-                        Activează pentru a primi cereri noi de la clienți
+                      <p className="text-sm text-gray-500">
+                        {formData.description.length}/500 caractere
                       </p>
                     </div>
-                    <Switch
-                      checked={profile.isAvailable}
-                      onCheckedChange={(checked) => setProfile({...profile, isAvailable: checked})}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
-            {/* Services */}
-            {activeTab === 'services' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Servicii oferite</CardTitle>
-                  <CardDescription>
-                    Adaugă și gestionează serviciile pe care le oferi clienților
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Existing Services */}
-                  <div className="space-y-4">
-                    {services.map((service) => (
-                      <div key={service.id} className="border rounded-lg p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-medium text-gray-900">{service.name}</h3>
-                            <p className="text-gray-600 text-sm mt-1">{service.description}</p>
-                            <div className="flex items-center space-x-4 mt-2">
-                              <span className="text-sm text-blue-600 font-medium">{service.price}</span>
-                              <span className="text-sm text-gray-500">⏱️ {service.duration}</span>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeService(service.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                    {/* Categories */}
+                    {craftsmanData.categories.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Categorii de servicii</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {craftsmanData.categories.map(({ category }) => (
+                            <Badge key={category.id} variant="secondary">
+                              {category.name}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    )}
 
-                  {/* Add New Service */}
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                    <h3 className="font-medium text-gray-900 mb-4">Adaugă serviciu nou</h3>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="serviceName">Nume serviciu *</Label>
-                          <Input
-                            id="serviceName"
-                            value={newService.name}
-                            onChange={(e) => setNewService({...newService, name: e.target.value})}
-                            placeholder="Ex: Instalații electrice"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="servicePrice">Preț *</Label>
-                          <Input
-                            id="servicePrice"
-                            value={newService.price}
-                            onChange={(e) => setNewService({...newService, price: e.target.value})}
-                            placeholder="Ex: 150-300 RON"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="serviceDescription">Descriere *</Label>
-                        <Textarea
-                          id="serviceDescription"
-                          value={newService.description}
-                          onChange={(e) => setNewService({...newService, description: e.target.value})}
-                          rows={3}
-                          placeholder="Descrie detaliat ce include acest serviciu..."
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="serviceDuration">Durată estimată</Label>
-                        <Input
-                          id="serviceDuration"
-                          value={newService.duration}
-                          onChange={(e) => setNewService({...newService, duration: e.target.value})}
-                          placeholder="Ex: 2-3 ore"
-                        />
-                      </div>
-                      <Button onClick={addService} className="w-full">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Adaugă serviciu
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={handleSaveProfile} 
+                        disabled={isSaving}
+                        className="px-8"
+                      >
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Se salvează...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Salvează modificările
+                          </>
+                        )}
                       </Button>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            {/* Schedule */}
-            {activeTab === 'schedule' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Program de lucru</CardTitle>
-                  <CardDescription>
-                    Configurează programul în care ești disponibil pentru clienți
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {workHours.map((day, index) => (
-                      <div key={day.day} className="flex items-center space-x-4 py-3 border-b border-gray-100 last:border-b-0">
-                        <div className="w-20">
-                          <span className="font-medium text-gray-900">{day.day}</span>
-                        </div>
-                        <div className="flex-1 flex items-center space-x-4">
-                          <Switch
-                            checked={day.isOpen}
-                            onCheckedChange={(checked) => updateWorkHours(index, 'isOpen', checked)}
-                          />
-                          {day.isOpen ? (
-                            <div className="flex items-center space-x-2">
-                              <Input
-                                type="time"
-                                value={day.openTime}
-                                onChange={(e) => updateWorkHours(index, 'openTime', e.target.value)}
-                                className="w-24"
-                              />
-                              <span className="text-gray-500">-</span>
-                              <Input
-                                type="time"
-                                value={day.closeTime}
-                                onChange={(e) => updateWorkHours(index, 'closeTime', e.target.value)}
-                                className="w-24"
-                              />
-                            </div>
-                          ) : (
-                            <span className="text-gray-500">Închis</span>
-                          )}
-                        </div>
+              {/* Portfolio */}
+              <TabsContent value="portfolio">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Portfolio</CardTitle>
+                    <CardDescription>
+                      Prezintă lucrările tale pentru a atrage mai mulți clienți
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {craftsmanData.portfolio.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500 mb-4">Nu ai încă lucrări în portfolio</p>
+                        <Button>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Adaugă prima lucrare
+                        </Button>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Zones */}
-            {activeTab === 'zones' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Zone de acoperire</CardTitle>
-                  <CardDescription>
-                    Selectează zonele în care oferi servicii
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {[
-                        'Sector 1', 'Sector 2', 'Sector 3', 'Sector 4', 'Sector 5', 'Sector 6',
-                        'Centrul Vechi', 'Băneasa', 'Pipera', 'Floreasca', 'Herastrau', 'Aviatorilor'
-                      ].map((zone) => (
-                        <label key={zone} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={profile.zones.includes(zone)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setProfile({...profile, zones: [...profile.zones, zone]});
-                              } else {
-                                setProfile({...profile, zones: profile.zones.filter(z => z !== zone)});
-                              }
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                          <span className="text-sm">{zone}</span>
-                        </label>
-                      ))}
-                    </div>
-                    
-                    <div className="mt-6">
-                      <Label>Zone selectate:</Label>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {profile.zones.map((zone) => (
-                          <Badge key={zone} variant="secondary">
-                            {zone}
-                          </Badge>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {craftsmanData.portfolio.map((item) => (
+                          <div key={item.id} className="border rounded-lg overflow-hidden">
+                            <img 
+                              src={item.imageUrl} 
+                              alt={item.title}
+                              className="w-full h-48 object-cover"
+                            />
+                            <div className="p-4">
+                              <h3 className="font-medium mb-2">{item.title}</h3>
+                              {item.description && (
+                                <p className="text-sm text-gray-600">{item.description}</p>
+                              )}
+                            </div>
+                          </div>
                         ))}
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            {/* Save Button */}
-            <div className="flex justify-end mt-8">
-              <Button 
-                onClick={handleSaveProfile} 
-                disabled={isLoading}
-                className="px-8"
-              >
-                {isLoading ? 'Se salvează...' : 'Salvează modificările'}
-              </Button>
-            </div>
+              {/* Reviews */}
+              <TabsContent value="reviews">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recenzii de la clienți</CardTitle>
+                    <CardDescription>
+                      Feedback-ul primit de la clienții cu care ai lucrat
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {craftsmanData.reviews.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">Nu ai încă recenzii</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {craftsmanData.reviews.map((review) => (
+                          <div key={review.id} className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium">{review.user.name}</span>
+                                <div className="flex items-center">
+                                  {[1,2,3,4,5].map((star) => (
+                                    <Star 
+                                      key={star} 
+                                      className={`h-4 w-4 ${star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <span className="text-sm text-gray-500">
+                                {new Date(review.createdAt).toLocaleDateString('ro-RO')}
+                              </span>
+                            </div>
+                            {review.comment && (
+                              <p className="text-gray-700">{review.comment}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
