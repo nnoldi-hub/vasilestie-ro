@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
@@ -10,6 +7,10 @@ export const runtime = 'nodejs';
 // GET /api/admin/activity - Get activity logs
 export async function GET(request: NextRequest) {
   try {
+    // Import dependencies dynamically to avoid build-time issues
+    const { getServerSession } = await import('next-auth/next');
+    const { authOptions } = await import('@/lib/auth');
+    
     const session = await getServerSession(authOptions);
     
     if (!session?.user || !['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) {
@@ -19,7 +20,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Parse parameters
+    // Import Prisma dynamically to avoid build-time connection issues
+    const { prisma } = await import('@/lib/prisma');
+
+    // Parse parameters safely
     const userId = request.nextUrl.searchParams.get('userId') || undefined;
     const action = request.nextUrl.searchParams.get('action') || undefined;
     const dateFromParam = request.nextUrl.searchParams.get('dateFrom');
@@ -28,7 +32,7 @@ export async function GET(request: NextRequest) {
     const dateFrom = dateFromParam ? new Date(dateFromParam) : undefined;
     const dateTo = dateToParam ? new Date(dateToParam) : undefined;
 
-    // Query activity logs directly instead of using AdminService
+    // Query activity logs with error handling
     const logs = await prisma.adminLog.findMany({
       include: {
         user: {
@@ -66,8 +70,9 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json(transformedLogs);
+    
   } catch (error) {
-    console.error('Error fetching activity logs:', error);
+    console.error('Error in activity route:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
