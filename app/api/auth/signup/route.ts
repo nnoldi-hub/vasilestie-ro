@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
+    // Import dependencies dynamically to avoid build-time issues
+    const bcrypt = await import('bcryptjs');
+    const { PrismaClient } = await import('@prisma/client');
+    
+    const prisma = new PrismaClient();
+
     const { name, email, password, role } = await request.json();
 
     // Validări
@@ -32,6 +35,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
+      await prisma.$disconnect();
       return NextResponse.json(
         { error: 'Un cont cu acest email există deja' },
         { status: 400 }
@@ -88,6 +92,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    await prisma.$disconnect();
+
     return NextResponse.json({
       success: true,
       message: 'Contul a fost creat cu succes',
@@ -100,7 +106,5 @@ export async function POST(request: NextRequest) {
       { error: 'A apărut o eroare la crearea contului' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
