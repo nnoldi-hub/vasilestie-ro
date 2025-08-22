@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import * as AdminService from '@/lib/services/admin-service';
+import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // GET /api/admin/activity - Get activity logs
 export async function GET(request: NextRequest) {
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Use nextUrl.searchParams instead of new URL(request.url)
+    // Parse parameters
     const userId = request.nextUrl.searchParams.get('userId') || undefined;
     const action = request.nextUrl.searchParams.get('action') || undefined;
     const dateFromParam = request.nextUrl.searchParams.get('dateFrom');
@@ -27,14 +28,44 @@ export async function GET(request: NextRequest) {
     const dateFrom = dateFromParam ? new Date(dateFromParam) : undefined;
     const dateTo = dateToParam ? new Date(dateToParam) : undefined;
 
-    const logs = await AdminService.getActivityLogs({
-      userId,
-      action,
-      dateFrom,
-      dateTo
+    // Query activity logs directly instead of using AdminService
+    const logs = await prisma.adminLog.findMany({
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
+      },
+      where: {
+        ...(userId && { userId }),
+        ...(action && { action: action as any }),
+        ...(dateFrom && {
+          createdAt: {
+            gte: dateFrom,
+            ...(dateTo && { lte: dateTo })
+          }
+        })
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 100
     });
 
-    return NextResponse.json(logs);
+    // Transform logs to match expected format
+    const transformedLogs = logs.map(log => ({
+      id: log.id,
+      userId: log.userId,
+      userName: (log as any).user?.name || (log as any).user?.email || 'Unknown',
+      action: log.action,
+      details: log.details || undefined,
+      timestamp: log.createdAt,
+      type: getActionType(log.action)
+    }));
+
+    return NextResponse.json(transformedLogs);
   } catch (error) {
     console.error('Error fetching activity logs:', error);
     return NextResponse.json(
@@ -42,4 +73,13 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Helper function to determine action type
+function getActionType(action: string): 'create' | 'update' | 'delete' | 'login' | 'system' {
+  if (action.includes('CREATED')) return 'create';
+  if (action.includes('UPDATED')) return 'update';
+  if (action.includes('DELETED')) return 'delete';
+  if (action.includes('LOGIN')) return 'login';
+  return 'system';
 }
