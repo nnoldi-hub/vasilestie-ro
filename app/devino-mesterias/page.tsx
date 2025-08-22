@@ -183,7 +183,7 @@ export default function BecomeCraftsmanPage() {
                       <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
                     ))}
                   </div>
-                  <p className="text-gray-600 italic">"{testimonial.comment}"</p>
+                  <p className="text-gray-600 italic">&ldquo;{testimonial.comment}&rdquo;</p>
                 </CardContent>
               </Card>
             ))}

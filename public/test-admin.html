@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { margin: 10px; padding: 10px 20px; background: #f97316; color: white; border: none; cursor: pointer; }
+        button:hover { background: #ea580c; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; white-space: pre-wrap; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Test Admin Member Creation</h1>
+    
+    <button onclick="testCreateMemberTest()">Test via /test endpoint</button>
+    <button onclick="testCreateMemberMain()">Test via main /team endpoint</button>
+    <button onclick="clearResult()">Clear Results</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        let counter = 1;
+        
+        async function testCreateMemberTest() {
+            await testEndpoint('/api/admin/team/test', 'Test');
+        }
+        
+        async function testCreateMemberMain() {
+            await testEndpoint('/api/admin/team', 'Main');
+        }
+        
+        async function testEndpoint(url, label) {
+            const resultEl = document.getElementById('result');
+            resultEl.innerHTML += `<h3>${label} Endpoint Test #${counter}</h3>`;
+            
+            const testData = {
+                name: `${label} User ${counter}`,
+                email: `${label.toLowerCase()}.user${counter}@example.com`,
+                role: 'SUPPORT'
+            };
+            
+            resultEl.innerHTML += `<p>Sending: <pre>${JSON.stringify(testData, null, 2)}</pre></p>`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const result = await response.text();
+                const statusClass = response.ok ? 'success' : 'error';
+                
+                resultEl.innerHTML += `<p class="${statusClass}">Status: ${response.status}</p>`;
+                resultEl.innerHTML += `<pre class="${statusClass}">${result}</pre>`;
+                
+                if (response.ok) {
+                    console.log('✅ Success:', JSON.parse(result));
+                } else {
+                    console.error('❌ Error:', result);
+                }
+                
+            } catch (error) {
+                resultEl.innerHTML += `<p class="error">Network Error: ${error.message}</p>`;
+                console.error('Network error:', error);
+            }
+            
+            resultEl.innerHTML += '<hr>';
+            counter++;
+        }
+        
+        function clearResult() {
+            document.getElementById('result').innerHTML = '';
+            counter = 1;
+        }
+    </script>
+</body>
+</html>

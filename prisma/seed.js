@@ -3,6 +3,8 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
 async function main() {
+  console.log('🌱 Starting database seed...')
+  
   // Clear existing data in proper order (respecting foreign keys)
   await prisma.adminLog.deleteMany({})
   await prisma.portfolioItem.deleteMany({})
@@ -14,6 +16,13 @@ async function main() {
   await prisma.category.deleteMany({})
   await prisma.account.deleteMany({})
   await prisma.session.deleteMany({})
+  
+  // Clear blog data
+  await prisma.blogComment.deleteMany({})
+  await prisma.blogPost.deleteMany({})
+  await prisma.blogTag.deleteMany({})
+  await prisma.blogCategory.deleteMany({})
+  await prisma.newsletter.deleteMany({})
   await prisma.user.deleteMany({})
 
   console.log('🗑️  Database cleared!')
@@ -46,349 +55,285 @@ async function main() {
     }),
     prisma.category.create({
       data: {
-        name: 'Reparații Electronice',
-        description: 'Reparații și mentenanță echipamente electronice',
+        name: 'Electricitate',
+        description: 'Servicii electrice și automatizări',
         icon: '⚡',
-        slug: 'reparatii-electronice'
+        slug: 'electricitate'
       }
     }),
     prisma.category.create({
       data: {
         name: 'Curățenie',
-        description: 'Servicii profesionale de curățenie',
-        icon: '🧽',
+        description: 'Servicii de curățenie profesională',
+        icon: '🧹',
         slug: 'curatenie'
       }
     })
   ])
 
-  console.log('✅ Categories created!')
+  console.log(`✅ Created ${categories.length} categories`)
 
-  // Create admin user
-  const adminUser = await prisma.user.create({
-    data: {
-      name: 'Super Admin',
-      email: 'admin@vasilestie.ro',
-      password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
-      role: 'SUPER_ADMIN',
-      emailVerified: new Date(),
-      image: null
-    }
-  })
-
-  // Create regular users
+  // Create users
   const users = await Promise.all([
     prisma.user.create({
       data: {
+        id: '1',
         name: 'Ion Popescu',
-        email: 'ion@example.com',
-        password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-        role: 'USER',
-        emailVerified: new Date()
+        email: 'ion.popescu@email.com',
+        emailVerified: new Date(),
+        image: '/images/users/ion-popescu.jpg',
+        role: 'USER'
       }
     }),
     prisma.user.create({
       data: {
+        id: '2',
         name: 'Maria Ionescu',
-        email: 'maria@example.com',
-        password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-        role: 'USER',
-        emailVerified: new Date()
-      }
-    })
-  ])
-
-  console.log('✅ Users created!')
-
-  // Create craftsman test user
-  const craftsmanTestUser = await prisma.user.create({
-    data: {
-      name: 'Test Meseriaș',
-      email: 'mester@vasilestie.ro',
-      password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // mester123
-      role: 'CRAFTSMAN',
-      emailVerified: new Date()
-    }
-  })
-
-  // Create craftsman users first
-  const craftsmanUsers = await Promise.all([
-    prisma.user.create({
-      data: {
-        name: 'Vasile Meseriaș',
-        email: 'vasile@meseriasi.ro',
-        password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-        role: 'CRAFTSMAN',
-        emailVerified: new Date()
+        email: 'maria.ionescu@email.com',
+        emailVerified: new Date(),
+        image: '/images/users/maria-ionescu.jpg',
+        role: 'USER'
       }
     }),
     prisma.user.create({
       data: {
-        name: 'Gheorghe Constructor',
-        email: 'gheorghe@constructii.ro',
-        password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-        role: 'CRAFTSMAN',
-        emailVerified: new Date()
+        id: '3',
+        name: 'Admin User',
+        email: 'admin@meserii.com',
+        emailVerified: new Date(),
+        image: '/images/users/admin.jpg',
+        role: 'ADMIN'
       }
     }),
     prisma.user.create({
       data: {
-        name: 'Ana Grădinărița',
-        email: 'ana@gradinarit.ro',
-        password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-        role: 'CRAFTSMAN',
-        emailVerified: new Date()
+        id: '4',
+        name: 'Andrei Ciobanu',
+        email: 'andrei.ciobanu@email.com',
+        emailVerified: new Date(),
+        image: '/images/users/andrei-ciobanu.jpg',
+        role: 'USER'
+      }
+    }),
+    prisma.user.create({
+      data: {
+        id: '5',
+        name: 'Elena Stoica',
+        email: 'elena.stoica@email.com',
+        emailVerified: new Date(),
+        image: '/images/users/elena-stoica.jpg',
+        role: 'USER'
       }
     })
   ])
 
-  // Create test craftsman profile
-  const testCraftsman = await prisma.craftsman.create({
-    data: {
-      userId: craftsmanTestUser.id,
-      businessName: 'Test Meseriaș SRL',
-      description: 'Cont de test pentru meseriaș',
-      phone: '0722999888',
-      address: 'Str. Test nr. 1',
-      city: 'București',
-      county: 'Ilfov',
-      experience: 5,
-      rating: 4.5,
-      reviewCount: 10,
-      verified: true,
-      subscriptionStatus: 'ACTIVE',
-      subscriptionPlan: 'BASIC',
-      subscriptionStartDate: new Date('2024-12-01'),
-      subscriptionEndDate: new Date('2025-01-01')
-    }
-  })
+  console.log(`✅ Created ${users.length} users`)
 
-  // Create craftsmen
-  const craftsmen = await Promise.all([
-    prisma.craftsman.create({
+  // Create blog categories
+  const blogCategories = await Promise.all([
+    prisma.blogCategory.create({
       data: {
-        userId: craftsmanUsers[0].id,
-        businessName: 'Vasile Instalații SRL',
-        description: 'Meseriaș cu experiență de 15 ani în instalații sanitare și încălzire.',
-        phone: '0722123456',
-        address: 'Str. Exemplu nr. 10',
-        city: 'București',
-        county: 'Ilfov',
-        experience: 15,
-        rating: 4.8,
-        reviewCount: 24,
-        verified: true,
-        subscriptionStatus: 'ACTIVE',
-        subscriptionPlan: 'PREMIUM',
-        subscriptionStartDate: new Date('2024-12-01'),
-        subscriptionEndDate: new Date('2025-01-01')
+        name: 'Sfaturi & Ghiduri',
+        slug: 'sfaturi-ghiduri',
+        description: 'Sfaturi practice și ghiduri step-by-step pentru proiecte DIY și colaborarea cu meșteșugarii.',
+        color: '#3B82F6'
       }
     }),
-    prisma.craftsman.create({
+    prisma.blogCategory.create({
       data: {
-        userId: craftsmanUsers[1].id,
-        businessName: 'Constructor Pro SRL',
-        description: 'Specialist în construcții rezidențiale și comerciale cu peste 20 de ani experiență.',
-        phone: '0722654321',
-        address: 'Str. Construcției nr. 5',
-        city: 'București',
-        county: 'Ilfov',
-        experience: 20,
-        rating: 4.9,
-        reviewCount: 45,
-        verified: true,
-        subscriptionStatus: 'ACTIVE',
-        subscriptionPlan: 'PROFESSIONAL',
-        subscriptionStartDate: new Date('2024-11-15'),
-        subscriptionEndDate: new Date('2025-02-15')
+        name: 'Meseriași & Experți',
+        slug: 'meseriasi-experti',
+        description: 'Povești de succes, interviuri și sfaturi de la meșteșugarii profesioniști.',
+        color: '#10B981'
       }
     }),
-    prisma.craftsman.create({
+    prisma.blogCategory.create({
       data: {
-        userId: craftsmanUsers[2].id,
-        businessName: 'Grădini Frumoase',
-        description: 'Peisagist cu experiență în amenajări de grădini și întreținere spații verzi.',
-        phone: '0722789123',
-        address: 'Str. Verde nr. 3',
-        city: 'București',
-        county: 'Ilfov',
-        experience: 8,
-        rating: 4.7,
-        reviewCount: 18,
-        verified: true,
-        subscriptionStatus: 'ACTIVE',
-        subscriptionPlan: 'BASIC',
-        subscriptionStartDate: new Date('2024-12-10'),
-        subscriptionEndDate: new Date('2025-01-10')
+        name: 'Tendințe & Inovații',
+        slug: 'tendinte-inovatii',
+        description: 'Ultimele tendințe în construcții, renovări și tehnologiile din industrie.',
+        color: '#8B5CF6'
+      }
+    }),
+    prisma.blogCategory.create({
+      data: {
+        name: 'Case Studies',
+        slug: 'case-studies',
+        description: 'Proiecte reale realizate prin platforma noastră cu detalii și rezultate.',
+        color: '#F59E0B'
+      }
+    }),
+    prisma.blogCategory.create({
+      data: {
+        name: 'Întreținere & Reparații',
+        slug: 'intretinere-reparatii',
+        description: 'Ghiduri pentru întreținerea casei și reparații minore pe care le poți face singur.',
+        color: '#EF4444'
       }
     })
   ])
 
-  console.log('✅ Craftsmen created!')
+  console.log(`✅ Created ${blogCategories.length} blog categories`)
 
-  // Create craftsman-category relationships
-  const craftsmanCategories = await Promise.all([
-    prisma.craftsmanCategory.create({
+  // Create blog tags
+  const blogTags = await Promise.all([
+    prisma.blogTag.create({
+      data: { name: 'Sfaturi', slug: 'sfaturi' }
+    }),
+    prisma.blogTag.create({
+      data: { name: 'Meseriași', slug: 'meseriasi' }
+    }),
+    prisma.blogTag.create({
+      data: { name: 'Bucătărie', slug: 'bucatarie' }
+    }),
+    prisma.blogTag.create({
+      data: { name: 'Planificare', slug: 'planificare' }
+    }),
+    prisma.blogTag.create({
+      data: { name: 'Buget', slug: 'buget' }
+    }),
+    prisma.blogTag.create({
+      data: { name: 'Siguranță', slug: 'siguranta' }
+    }),
+    prisma.blogTag.create({
+      data: { name: 'Electricitate', slug: 'electricitate' }
+    }),
+    prisma.blogTag.create({
+      data: { name: 'DIY', slug: 'diy' }
+    })
+  ])
+
+  console.log(`✅ Created ${blogTags.length} blog tags`)
+
+  // Create blog posts with realistic content
+  const blogPosts = await Promise.all([
+    prisma.blogPost.create({
       data: {
-        craftsmanId: craftsmen[0].id,
-        categoryId: categories[0].id
+        title: '10 Sfaturi Esențiale pentru Renovarea Bucătăriei',
+        slug: '10-sfaturi-esentiale-renovarea-bucatariei',
+        excerpt: 'Descoperiți secretele unei renovări de bucătărie reușite, de la planificarea bugetului la alegerea materialelor potrivite.',
+        content: 'Renovarea bucătăriei este unul dintre proiectele cele mai provocatoare, dar și cele mai satisfăcătoare pentru casa ta. Planificarea este cheia succesului - fă un plan detaliat înainte să începi.',
+        featuredImage: '/images/blog/renovare-bucatarie-cover.jpg',
+        published: true,
+        featured: true,
+        views: 1247,
+        readTime: 8,
+        authorId: users[2].id,
+        categoryId: blogCategories[0].id,
+        tags: {
+          connect: [
+            { id: blogTags[0].id }, // Sfaturi
+            { id: blogTags[2].id }, // Bucătărie
+            { id: blogTags[3].id }, // Planificare
+            { id: blogTags[4].id }  // Buget
+          ]
+        }
       }
     }),
-    prisma.craftsmanCategory.create({
+    prisma.blogPost.create({
       data: {
-        craftsmanId: craftsmen[1].id,
-        categoryId: categories[1].id
+        title: 'Cum să Alegi Electricianul Potrivit pentru Casa Ta',
+        slug: 'cum-sa-alegi-electricianul-potrivit',
+        excerpt: 'Ghid complet pentru selectarea unui electrician de încredere. Află ce întrebări să pui și ce verificări să faci înainte de angajare.',
+        content: 'Alegerile greșite în privința instalațiilor electrice pot fi costisitoare și periculoase. Un electrician calificat nu doar că îți economisește bani, dar îți poate salva viața.',
+        featuredImage: '/images/blog/electrician-lucru-cover.jpg',
+        published: true,
+        featured: false,
+        views: 892,
+        readTime: 6,
+        authorId: users[2].id,
+        categoryId: blogCategories[1].id,
+        tags: {
+          connect: [
+            { id: blogTags[1].id }, // Meseriași
+            { id: blogTags[5].id }, // Siguranță
+            { id: blogTags[6].id }, // Electricitate
+            { id: blogTags[0].id }  // Sfaturi
+          ]
+        }
       }
     }),
-    prisma.craftsmanCategory.create({
+    prisma.blogPost.create({
       data: {
-        craftsmanId: craftsmen[2].id,
-        categoryId: categories[2].id
+        title: '5 Proiecte DIY Sigure pe Care Le Poți Face Singur',
+        slug: '5-proiecte-diy-sigure',
+        excerpt: 'Proiecte simple de îmbunătățire a casei pe care le poți realiza fără ajutorul unui meșteșugar, cu instrumente de bază și puțină îndemânare.',
+        content: 'Nu toate îmbunătățirile casei necesită un meșteșugar professional. Iată 5 proiecte DIY sigure și satisfăcătoare pentru începători.',
+        featuredImage: '/images/blog/diy-proiecte-cover.jpg',
+        published: true,
+        featured: true,
+        views: 1546,
+        readTime: 7,
+        authorId: users[2].id,
+        categoryId: blogCategories[0].id,
+        tags: {
+          connect: [
+            { id: blogTags[7].id }, // DIY
+            { id: blogTags[0].id }, // Sfaturi
+            { id: blogTags[5].id }, // Siguranță
+            { id: blogTags[4].id }  // Buget
+          ]
+        }
       }
     })
   ])
 
-  console.log('✅ Craftsman categories linked!')
+  console.log(`✅ Created ${blogPosts.length} blog posts`)
 
-  // Create subscription payments
-  const subscriptionPayments = await Promise.all([
-    prisma.subscriptionPayment.create({
+  // Create newsletter subscriptions
+  const newsletterSubscriptions = await Promise.all([
+    prisma.newsletter.create({
       data: {
-        craftsmanId: craftsmen[0].id,
-        amount: 49.99,
-        plan: 'PREMIUM',
-        paymentMethod: 'Card',
-        validFrom: new Date('2024-12-01'),
-        validUntil: new Date('2025-01-01'),
-        status: 'COMPLETED',
-        invoiceNumber: 'INV-2024-001'
+        email: 'alex.newsletter@email.com',
+        subscribed: true,
+        confirmed: true
       }
     }),
-    prisma.subscriptionPayment.create({
+    prisma.newsletter.create({
       data: {
-        craftsmanId: craftsmen[1].id,
-        amount: 99.99,
-        plan: 'PROFESSIONAL',
-        paymentMethod: 'Transfer bancar',
-        validFrom: new Date('2024-11-15'),
-        validUntil: new Date('2025-02-15'),
-        status: 'COMPLETED',
-        invoiceNumber: 'INV-2024-002'
+        email: 'maria.updates@email.com',
+        subscribed: true,
+        confirmed: true
       }
     }),
-    prisma.subscriptionPayment.create({
+    prisma.newsletter.create({
       data: {
-        craftsmanId: craftsmen[2].id,
-        amount: 29.99,
-        plan: 'BASIC',
-        paymentMethod: 'Card',
-        validFrom: new Date('2024-12-10'),
-        validUntil: new Date('2025-01-10'),
-        status: 'COMPLETED',
-        invoiceNumber: 'INV-2024-003'
+        email: 'ion.news@email.com',
+        subscribed: true,
+        confirmed: true
+      }
+    }),
+    prisma.newsletter.create({
+      data: {
+        email: 'carmen.blog@email.com',
+        subscribed: false,
+        confirmed: false
       }
     })
   ])
 
-  console.log('✅ Subscription payments created!')
+  console.log(`✅ Created ${newsletterSubscriptions.length} newsletter subscriptions`)
 
-  // Create contact requests (înlocuiește bookings)
-  const contactRequests = await Promise.all([
-    prisma.contactRequest.create({
-      data: {
-        userId: users[0].id,
-        craftsmanId: craftsmen[0].id,
-        service: 'Reparație țeavă spartă',
-        description: 'Se necesită reparația unei țevi sparte în bucătărie',
-        status: 'ACCEPTED',
-        clientName: 'Ion Popescu',
-        clientPhone: '0722111222',
-        clientEmail: 'ion@example.com',
-        location: 'Str. Exemplu nr. 1, Sector 1',
-        scheduledAt: new Date('2024-12-25T10:00:00Z')
-      }
-    }),
-    prisma.contactRequest.create({
-      data: {
-        userId: users[1].id,
-        craftsmanId: craftsmen[1].id,
-        service: 'Renovare baie',
-        description: 'Renovare completă baie - gresie, faianță, instalații',
-        status: 'PENDING',
-        clientName: 'Maria Ionescu',
-        clientPhone: '0722333444',
-        clientEmail: 'maria@example.com',
-        location: 'Str. Test nr. 10, Sector 2',
-        scheduledAt: new Date('2024-12-26T09:00:00Z')
-      }
-    }),
-    prisma.contactRequest.create({
-      data: {
-        userId: users[0].id,
-        craftsmanId: craftsmen[2].id,
-        service: 'Amenajare grădină',
-        description: 'Amenajare completă grădină cu sistem de irigații',
-        status: 'IN_PROGRESS',
-        clientName: 'Ion Popescu',
-        clientPhone: '0722111222',
-        clientEmail: 'ion@example.com',
-        location: 'Str. Verde nr. 5, Sector 3',
-        scheduledAt: new Date('2024-12-28T08:00:00Z')
-      }
-    })
-  ])
-
-  console.log('✅ Contact requests created!')
-
-  // Create reviews
-  const reviews = await Promise.all([
-    prisma.review.create({
-      data: {
-        userId: users[0].id,
-        craftsmanId: craftsmen[0].id,
-        rating: 5,
-        comment: 'Serviciu excelent! A venit la timp și a rezolvat problema rapid.'
-      }
-    }),
-    prisma.review.create({
-      data: {
-        userId: users[1].id,
-        craftsmanId: craftsmen[1].id,
-        rating: 4,
-        comment: 'Lucrare de calitate, recomand!'
-      }
-    }),
-    prisma.review.create({
-      data: {
-        userId: users[0].id,
-        craftsmanId: craftsmen[2].id,
-        rating: 5,
-        comment: 'Foarte mulțumit de serviciile oferite. Profesionalism maxim!'
-      }
-    })
-  ])
-
-  console.log('✅ Reviews created!')
-
-  console.log('🎉 Database seeded successfully!')
-  
-  // Print summary
+  // Print summary with blog statistics
   const userCount = await prisma.user.count()
-  const craftsmanCount = await prisma.craftsman.count()
   const categoryCount = await prisma.category.count()
-  const contactCount = await prisma.contactRequest.count()
-  const reviewCount = await prisma.review.count()
-  const subscriptionPaymentCount = await prisma.subscriptionPayment.count()
+  const blogPostCount = await prisma.blogPost.count()
+  const blogCategoryCount = await prisma.blogCategory.count()
+  const blogTagCount = await prisma.blogTag.count()
+  const newsletterCount = await prisma.newsletter.count()
   
   console.log(`
 📊 Database Summary:
    👥 Users: ${userCount}
-   🔨 Craftsmen: ${craftsmanCount}
    📂 Categories: ${categoryCount}
-   � Contact Requests: ${contactCount}
-   ⭐ Reviews: ${reviewCount}
-   � Subscription Payments: ${subscriptionPaymentCount}
+   
+   📝 Blog Posts: ${blogPostCount}
+   📂 Blog Categories: ${blogCategoryCount}
+   🏷️  Blog Tags: ${blogTagCount}
+   📧 Newsletter Subscriptions: ${newsletterCount}
   `)
+
+  console.log('🎉 Database seeding completed successfully!')
 }
 
 main()
@@ -396,7 +341,7 @@ main()
     await prisma.$disconnect()
   })
   .catch(async (e) => {
-    console.error(e)
+    console.error('❌ Error during seeding:', e)
     await prisma.$disconnect()
     process.exit(1)
   })

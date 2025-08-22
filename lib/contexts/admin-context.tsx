@@ -181,9 +181,15 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     async loadTeamMembers() {
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
-        const members = await AdminService.getTeamMembers();
+        const response = await fetch('/api/admin/team');
+        if (!response.ok) {
+          throw new Error('Failed to fetch team members');
+        }
+        
+        const members = await response.json();
+        
         // Convert to the format expected by the context
-        const convertedMembers = members.map(member => ({
+        const convertedMembers = members.map((member: any) => ({
           ...member,
           firstName: member.name.split(' ')[0] || member.name,
           lastName: member.name.split(' ')[1] || '',
@@ -194,7 +200,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           salary: 0,
           permissions: member.permissions
         }));
-        dispatch({ type: 'SET_TEAM_MEMBERS', payload: convertedMembers as any[] });
+        dispatch({ type: 'SET_TEAM_MEMBERS', payload: convertedMembers });
       } catch (error) {
         console.error('Error loading team members:', error);
         dispatch({ type: 'SET_ERROR', payload: 'Eroare la încărcarea membrilor echipei' });
@@ -204,17 +210,44 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     async createTeamMember(data: any) {
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
-        const newMember = await AdminService.createTeamMember({
-          name: `${data.firstName} ${data.lastName}`,
-          email: data.email,
-          role: data.role
+        const response = await fetch('/api/admin/team', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: `${data.firstName} ${data.lastName}`.trim(),
+            email: data.email,
+            role: data.role
+          }),
         });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create team member');
+        }
+
+        const newMember = await response.json();
         
-        dispatch({ type: 'ADD_TEAM_MEMBER', payload: newMember });
-        return newMember;
+        // Convert to context format
+        const convertedMember = {
+          ...newMember,
+          firstName: newMember.name.split(' ')[0] || newMember.name,
+          lastName: newMember.name.split(' ')[1] || '',
+          avatar: '',
+          department: getDepartmentForRole(newMember.role),
+          phone: '',
+          hireDate: newMember.joinedAt,
+          salary: 0,
+          permissions: newMember.permissions
+        };
+        
+        dispatch({ type: 'ADD_TEAM_MEMBER', payload: convertedMember });
+        return convertedMember;
       } catch (error) {
         console.error('Error creating team member:', error);
-        dispatch({ type: 'SET_ERROR', payload: 'Eroare la crearea membrului' });
+        const errorMessage = error instanceof Error ? error.message : 'Eroare la crearea membrului';
+        dispatch({ type: 'SET_ERROR', payload: errorMessage });
         return null;
       }
     },
@@ -222,10 +255,38 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     async updateTeamMember(id: string, data: any) {
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
-        // For now, just update the local state
-        const updatedMember = { ...state.teamMembers.find(m => m.id === id), ...data };
-        dispatch({ type: 'UPDATE_TEAM_MEMBER', payload: updatedMember as any });
-        return updatedMember;
+        const response = await fetch(`/api/admin/team/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: data.firstName && data.lastName ? `${data.firstName} ${data.lastName}`.trim() : undefined,
+            role: data.role
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update team member');
+        }
+
+        const updatedMember = await response.json();
+        
+        // Convert to context format
+        const convertedMember = {
+          ...updatedMember,
+          firstName: updatedMember.name.split(' ')[0] || updatedMember.name,
+          lastName: updatedMember.name.split(' ')[1] || '',
+          avatar: data.avatar || '',
+          department: getDepartmentForRole(updatedMember.role),
+          phone: data.phone || '',
+          hireDate: updatedMember.joinedAt,
+          salary: data.salary || 0,
+          permissions: updatedMember.permissions
+        };
+        
+        dispatch({ type: 'UPDATE_TEAM_MEMBER', payload: convertedMember });
+        return convertedMember;
       } catch (error) {
         console.error('Error updating team member:', error);
         dispatch({ type: 'SET_ERROR', payload: 'Eroare la actualizarea membrului' });
@@ -236,12 +297,21 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     async deleteTeamMember(id: string) {
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
-        // For now, just remove from local state
+        const response = await fetch(`/api/admin/team/${id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to delete team member');
+        }
+
         dispatch({ type: 'REMOVE_TEAM_MEMBER', payload: id });
         return true;
       } catch (error) {
         console.error('Error deleting team member:', error);
-        dispatch({ type: 'SET_ERROR', payload: 'Eroare la ștergerea membrului' });
+        const errorMessage = error instanceof Error ? error.message : 'Eroare la ștergerea membrului';
+        dispatch({ type: 'SET_ERROR', payload: errorMessage });
         return false;
       }
     },
@@ -294,26 +364,13 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     
     async loadActivityLogs() {
       try {
-        // Mock activity logs for now
-        const mockLogs: ActivityLog[] = [
-          {
-            id: '1',
-            userId: '1',
-            action: 'login',
-            description: 's-a conectat la sistem',
-            timestamp: new Date(),
-            metadata: {}
-          },
-          {
-            id: '2',
-            userId: '2',
-            action: 'create',
-            description: 'a creat un nou membru',
-            timestamp: new Date(Date.now() - 3600000),
-            metadata: {}
-          }
-        ];
-        dispatch({ type: 'SET_ACTIVITY_LOGS', payload: mockLogs });
+        const response = await fetch('/api/admin/activity');
+        if (!response.ok) {
+          throw new Error('Failed to fetch activity logs');
+        }
+        
+        const logs = await response.json();
+        dispatch({ type: 'SET_ACTIVITY_LOGS', payload: logs });
       } catch (error) {
         console.error('Error loading activity logs:', error);
         dispatch({ type: 'SET_ERROR', payload: 'Eroare la încărcarea log-urilor' });

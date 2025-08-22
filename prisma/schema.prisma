@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -51,18 +51,18 @@ model User {
   role          UserRole  @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  
+
   // Relations
-  accounts      Account[]
-  sessions      Session[]
-  craftsman     Craftsman?
-  reviews       Review[]
+  accounts        Account[]
+  sessions        Session[]
+  craftsman       Craftsman?
+  reviews         Review[]
   contactRequests ContactRequest[] // Înlocuiește bookings
-  adminLogs     AdminLog[]
-  
+  adminLogs       AdminLog[]
+
   // Blog relations
-  blogPosts     BlogPost[] @relation("BlogAuthor")
-  blogComments  BlogComment[] @relation("BlogComments")
+  blogPosts    BlogPost[]    @relation("BlogAuthor")
+  blogComments BlogComment[] @relation("BlogComments")
 }
 
 model VerificationToken {
@@ -75,132 +75,132 @@ model VerificationToken {
 
 // Business Models
 model Craftsman {
-  id              String              @id @default(cuid())
-  userId          String              @unique
-  businessName    String
-  description     String
-  phone           String
-  address         String
-  city            String
-  county          String
-  experience      Int                 // years
-  verified        Boolean             @default(false)
-  rating          Float               @default(0)
-  reviewCount     Int                 @default(0)
-  subscriptionStatus SubscriptionStatus @default(INACTIVE)
-  subscriptionPlan   SubscriptionPlan    @default(BASIC)
+  id                    String             @id @default(cuid())
+  userId                String             @unique
+  businessName          String
+  description           String
+  phone                 String
+  address               String
+  city                  String
+  county                String
+  experience            Int // years
+  verified              Boolean            @default(false)
+  rating                Float              @default(0)
+  reviewCount           Int                @default(0)
+  subscriptionStatus    SubscriptionStatus @default(INACTIVE)
+  subscriptionPlan      SubscriptionPlan   @default(BASIC)
   subscriptionStartDate DateTime?
   subscriptionEndDate   DateTime?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
   // Relations
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  categories      CraftsmanCategory[]
-  reviews         Review[]
-  contacts        ContactRequest[]    // Înlocuiește bookings
-  portfolio       PortfolioItem[]
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories           CraftsmanCategory[]
+  reviews              Review[]
+  contacts             ContactRequest[] // Înlocuiește bookings
+  portfolio            PortfolioItem[]
   subscriptionPayments SubscriptionPayment[]
 }
 
 model Category {
-  id          String              @id @default(cuid())
-  name        String              @unique
-  slug        String              @unique
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
   icon        String
   description String?
-  createdAt   DateTime            @default(now())
-  
+  createdAt   DateTime @default(now())
+
   // Relations
-  craftsmen   CraftsmanCategory[]
+  craftsmen CraftsmanCategory[]
 }
 
 model CraftsmanCategory {
-  id          String    @id @default(cuid())
+  id          String @id @default(cuid())
   craftsmanId String
   categoryId  String
-  
+
   // Relations
-  craftsman   Craftsman @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
-  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  
+  craftsman Craftsman @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
+  category  Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
   @@unique([craftsmanId, categoryId])
 }
 
 model Review {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   userId      String
   craftsmanId String
-  rating      Int       // 1-5
+  rating      Int // 1-5
   comment     String?
-  createdAt   DateTime  @default(now())
-  
+  createdAt   DateTime @default(now())
+
   // Relations
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  craftsman   Craftsman @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
-  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  craftsman Craftsman @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
+
   @@unique([userId, craftsmanId])
 }
 
 // Înlocuiește Booking cu ContactRequest (fără plăți prin platformă)
 model ContactRequest {
-  id          String              @id @default(cuid())
-  userId      String              // Client
-  craftsmanId String              // Meseriaș
-  service     String              // Tip serviciu solicitat
-  description String              // Detalii despre lucrare
-  status      ContactStatus       @default(PENDING)
-  clientName  String              // Numele clientului
-  clientPhone String              // Telefonul clientului
-  clientEmail String              // Email-ul clientului
-  location    String?             // Locația unde se execută lucrarea
-  scheduledAt DateTime?           // Data dorită (opțional)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  
+  id          String        @id @default(cuid())
+  userId      String // Client
+  craftsmanId String // Meseriaș
+  service     String // Tip serviciu solicitat
+  description String // Detalii despre lucrare
+  status      ContactStatus @default(PENDING)
+  clientName  String // Numele clientului
+  clientPhone String // Telefonul clientului
+  clientEmail String // Email-ul clientului
+  location    String? // Locația unde se execută lucrarea
+  scheduledAt DateTime? // Data dorită (opțional)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
   // Relations
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  craftsman   Craftsman           @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  craftsman Craftsman @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
 }
 
 // Sistem de abonamente pentru meseriași
 model SubscriptionPayment {
-  id              String              @id @default(cuid())
-  craftsmanId     String
-  amount          Float               // Suma plătită
-  plan            SubscriptionPlan    // Planul de abonament
-  paymentMethod   String              // Metoda de plată (card, transfer, etc.)
-  paymentDate     DateTime            @default(now())
-  validFrom       DateTime            // Data de început
-  validUntil      DateTime            // Data de sfârșit
-  status          PaymentStatus       @default(PENDING)
-  invoiceNumber   String?             // Numărul facturii
-  
+  id            String           @id @default(cuid())
+  craftsmanId   String
+  amount        Float // Suma plătită
+  plan          SubscriptionPlan // Planul de abonament
+  paymentMethod String // Metoda de plată (card, transfer, etc.)
+  paymentDate   DateTime         @default(now())
+  validFrom     DateTime // Data de început
+  validUntil    DateTime // Data de sfârșit
+  status        PaymentStatus    @default(PENDING)
+  invoiceNumber String? // Numărul facturii
+
   // Relations
-  craftsman       Craftsman           @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
+  craftsman Craftsman @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
 }
 
 model PortfolioItem {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   craftsmanId String
   title       String
   description String?
   imageUrl    String
-  createdAt   DateTime  @default(now())
-  
+  createdAt   DateTime @default(now())
+
   // Relations
-  craftsman   Craftsman @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
+  craftsman Craftsman @relation(fields: [craftsmanId], references: [id], onDelete: Cascade)
 }
 
 model AdminLog {
-  id        String          @id @default(cuid())
+  id        String      @id @default(cuid())
   userId    String
   action    AdminAction
   details   String?
-  createdAt DateTime        @default(now())
-  
+  createdAt DateTime    @default(now())
+
   // Relations
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Enums
@@ -214,33 +214,33 @@ enum UserRole {
 }
 
 enum ContactStatus {
-  PENDING       // În așteptare (clientul a trimis cererea)
-  VIEWED        // Văzută de meseriaș
-  RESPONDED     // Meseriașul a răspuns
-  ACCEPTED      // Meseriașul a acceptat lucrarea
-  IN_PROGRESS   // Lucrarea este în desfășurare
-  COMPLETED     // Lucrarea este terminată
-  CANCELLED     // Anulată
+  PENDING // În așteptare (clientul a trimis cererea)
+  VIEWED // Văzută de meseriaș
+  RESPONDED // Meseriașul a răspuns
+  ACCEPTED // Meseriașul a acceptat lucrarea
+  IN_PROGRESS // Lucrarea este în desfășurare
+  COMPLETED // Lucrarea este terminată
+  CANCELLED // Anulată
 }
 
 enum SubscriptionStatus {
-  INACTIVE      // Fără abonament activ
-  ACTIVE        // Abonament activ
-  EXPIRED       // Abonament expirat
-  SUSPENDED     // Suspendat (pentru neplată)
+  INACTIVE // Fără abonament activ
+  ACTIVE // Abonament activ
+  EXPIRED // Abonament expirat
+  SUSPENDED // Suspendat (pentru neplată)
 }
 
 enum SubscriptionPlan {
-  BASIC         // Plan de bază (5 contacte/lună)
-  PREMIUM       // Plan premium (20 contacte/lună)
-  PROFESSIONAL  // Plan profesional (contacte nelimitate)
+  BASIC // Plan de bază (5 contacte/lună)
+  PREMIUM // Plan premium (20 contacte/lună)
+  PROFESSIONAL // Plan profesional (contacte nelimitate)
 }
 
 enum PaymentStatus {
-  PENDING       // În așteptare
-  COMPLETED     // Plătit
-  FAILED        // Eșuat
-  REFUNDED      // Rambursat
+  PENDING // În așteptare
+  COMPLETED // Plătit
+  FAILED // Eșuat
+  REFUNDED // Rambursat
 }
 
 enum AdminAction {
@@ -263,117 +263,117 @@ enum AdminAction {
 
 // Blog Models
 model BlogPost {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  excerpt     String?
-  content     String
+  id            String  @id @default(cuid())
+  title         String
+  slug          String  @unique
+  excerpt       String?
+  content       String
   featuredImage String?
-  published   Boolean  @default(false)
-  featured    Boolean  @default(false)
-  views       Int      @default(0)
-  readTime    Int?     // minutes
-  
+  published     Boolean @default(false)
+  featured      Boolean @default(false)
+  views         Int     @default(0)
+  readTime      Int? // minutes
+
   // Author relationship
-  authorId    String
-  author      User     @relation("BlogAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  
+  authorId String
+  author   User   @relation("BlogAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
   // Category relationship
-  categoryId  String
-  category    BlogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  
+  categoryId String
+  category   BlogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
   // Tags relationship (many-to-many)
-  tags        BlogTag[]
-  
+  tags BlogTag[]
+
   // Comments
-  comments    BlogComment[]
-  
+  comments BlogComment[]
+
   // SEO fields
   metaTitle       String?
   metaDescription String?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
-  
+
   @@map("blog_posts")
 }
 
 model BlogCategory {
-  id          String     @id @default(cuid())
-  name        String     @unique
-  slug        String     @unique
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
   description String?
-  color       String?    // hex color for UI
-  icon        String?    // emoji or icon name
-  
-  posts       BlogPost[]
-  
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  
+  color       String? // hex color for UI
+  icon        String? // emoji or icon name
+
+  posts BlogPost[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("blog_categories")
 }
 
 model BlogTag {
-  id    String @id @default(cuid())
-  name  String @unique
-  slug  String @unique
-  
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+
   posts BlogPost[]
-  
+
   createdAt DateTime @default(now())
-  
+
   @@map("blog_tags")
 }
 
 model BlogComment {
-  id        String   @id @default(cuid())
-  content   String
-  approved  Boolean  @default(false)
-  
+  id       String  @id @default(cuid())
+  content  String
+  approved Boolean @default(false)
+
   // Author (can be registered user or guest)
-  userId    String?
-  user      User?    @relation("BlogComments", fields: [userId], references: [id], onDelete: SetNull)
-  
+  userId String?
+  user   User?   @relation("BlogComments", fields: [userId], references: [id], onDelete: SetNull)
+
   // Guest author info (if not registered)
   guestName    String?
   guestEmail   String?
   guestWebsite String?
-  
+
   // Post relationship
-  postId    String
-  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  
+  postId String
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
   // Reply system (self-referencing)
-  parentId  String?
-  parent    BlogComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   BlogComment[] @relation("CommentReplies")
-  
+  parentId String?
+  parent   BlogComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  BlogComment[] @relation("CommentReplies")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@map("blog_comments")
 }
 
 model Newsletter {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  subscribed  Boolean  @default(true)
-  confirmed   Boolean  @default(false)
-  
+  id         String  @id @default(cuid())
+  email      String  @unique
+  subscribed Boolean @default(true)
+  confirmed  Boolean @default(false)
+
   // Subscription preferences
-  frequency   NewsletterFrequency @default(WEEKLY)
-  categories  String[] // Array of category IDs user is interested in
-  
+  frequency  NewsletterFrequency @default(WEEKLY)
+  categories String? // JSON string cu category IDs pentru SQLite
+
   // Tracking
-  confirmToken String?  @unique
+  confirmToken     String? @unique
   unsubscribeToken String? @unique
-  
-  subscribedAt DateTime @default(now())
-  confirmedAt  DateTime?
+
+  subscribedAt  DateTime  @default(now())
+  confirmedAt   DateTime?
   lastEmailSent DateTime?
-  
+
   @@map("newsletter_subscriptions")
 }
 
