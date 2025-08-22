@@ -1,6 +1,21 @@
 import NextAuth from 'next-auth';
-import { authOptions } from '@/lib/auth';
 
-const handler = NextAuth(authOptions);
+// Force dynamic rendering for NextAuth
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
-export { handler as GET, handler as POST };
+// Import authOptions dynamically to prevent build-time issues
+async function createHandler() {
+  const { authOptions } = await import('@/lib/auth');
+  return NextAuth(authOptions);
+}
+
+export async function GET(request: any, context: any) {
+  const handler = await createHandler();
+  return handler(request, context);
+}
+
+export async function POST(request: any, context: any) {
+  const handler = await createHandler();
+  return handler(request, context);
+}
