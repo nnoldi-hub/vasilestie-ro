@@ -1,0 +1,32 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm ci",
+  "devCommand": "npm run dev",
+  "env": {
+    "DATABASE_URL": {
+      "description": "PostgreSQL database connection string",
+      "value": "@database-url"
+    },
+    "NEXTAUTH_SECRET": {
+      "description": "Secret key for NextAuth.js authentication",
+      "value": "@nextauth-secret"
+    },
+    "NEXTAUTH_URL": {
+      "description": "Canonical URL of your site",
+      "value": "@nextauth-url"
+    }
+  },
+  "functions": {
+    "app/api/**/*.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/cleanup",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}

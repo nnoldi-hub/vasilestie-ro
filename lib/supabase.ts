@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 
 // Pentru demo, vom folosi o instanță publică de test
 // În producție, folosește propriile chei de mediu
-const supabaseUrl = 'https://your-project.supabase.co'
-const supabaseKey = 'your-anon-key'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co'
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key'
 
 // Pentru demo local, vom crea un client mock
 const isDev = process.env.NODE_ENV === 'development'
