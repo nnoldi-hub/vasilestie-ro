@@ -367,9 +367,9 @@ export function MemberFormDialog({ open, onOpenChange, member, mode }: MemberFor
                       <div className="p-4 bg-gray-50 rounded-lg">
                         <h4 className="font-medium text-gray-900 mb-2">Informații Cont</h4>
                         <div className="text-sm text-gray-600 space-y-1">
-                          <p>Creat: {member?.createdAt.toLocaleDateString('ro-RO')}</p>
-                          <p>Ultima actualizare: {member?.updatedAt.toLocaleDateString('ro-RO')}</p>
-                          <p>Ultima autentificare: {member?.lastLogin?.toLocaleDateString('ro-RO') || 'Niciodată'}</p>
+                          <p>Creat: {member?.createdAt ? new Date(member.createdAt).toLocaleDateString('ro-RO') : 'N/A'}</p>
+                          <p>Ultima actualizare: {member?.updatedAt ? new Date(member.updatedAt).toLocaleDateString('ro-RO') : 'N/A'}</p>
+                          <p>Ultima autentificare: {member?.lastLogin ? new Date(member.lastLogin).toLocaleDateString('ro-RO') : 'Niciodată'}</p>
                         </div>
                       </div>
                       

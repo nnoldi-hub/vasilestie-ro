@@ -243,8 +243,8 @@ export function AdminDashboard() {
                         {log.description}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {log.timestamp.toLocaleDateString('ro-RO')} la{' '}
-                        {log.timestamp.toLocaleTimeString('ro-RO', { 
+                        {new Date(log.timestamp).toLocaleDateString('ro-RO')} la{' '}
+                        {new Date(log.timestamp).toLocaleTimeString('ro-RO', { 
                           hour: '2-digit', 
                           minute: '2-digit' 
                         })}

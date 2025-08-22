@@ -352,7 +352,7 @@ export function TeamManagement() {
                     <TableCell>
                       <span className="text-sm text-gray-600">
                         {member.lastActive
-                          ? member.lastActive.toLocaleDateString('ro-RO')
+                          ? new Date(member.lastActive).toLocaleDateString('ro-RO')
                           : 'Niciodată'
                         }
                       </span>
