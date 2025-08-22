@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import * as AdminService from '@/lib/services/admin-service';
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // POST /api/admin/team/test - Test endpoint for creating team members without auth
 export async function POST(request: NextRequest) {
@@ -26,6 +29,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Import AdminService dynamically
+    const AdminService = await import('@/lib/services/admin-service');
     const newMember = await AdminService.createTeamMember({
       name: data.name,
       email: data.email,

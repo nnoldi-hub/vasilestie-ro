@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import * as AdminService from '@/lib/services/admin-service';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // GET /api/admin/team - Get all team members
 export async function GET() {
   try {
+    // Import dependencies dynamically
+    const { getServerSession } = await import('next-auth/next');
+    const { authOptions } = await import('@/lib/auth');
+    
     const session = await getServerSession(authOptions);
     
     if (!session?.user || !['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) {
@@ -18,6 +20,7 @@ export async function GET() {
       );
     }
 
+    const AdminService = await import('@/lib/services/admin-service');
     const teamMembers = await AdminService.getTeamMembers();
     return NextResponse.json(teamMembers);
   } catch (error) {
@@ -32,6 +35,10 @@ export async function GET() {
 // POST /api/admin/team - Create new team member
 export async function POST(request: NextRequest) {
   try {
+    // Import dependencies dynamically
+    const { getServerSession } = await import('next-auth/next');
+    const { authOptions } = await import('@/lib/auth');
+    
     const session = await getServerSession(authOptions);
     
     // În development, permitem și cereri fără sesiune pentru testare
@@ -75,6 +82,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const AdminService = await import('@/lib/services/admin-service');
     const newMember = await AdminService.createTeamMember({
       name: data.name,
       email: data.email,

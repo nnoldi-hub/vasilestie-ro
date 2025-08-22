@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import * as AdminService from '@/lib/services/admin-service';
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // PUT /api/admin/team/[id] - Update team member
 export async function PUT(
@@ -9,6 +10,10 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Import dependencies dynamically
+    const { getServerSession } = await import('next-auth/next');
+    const { authOptions } = await import('@/lib/auth');
+    
     const session = await getServerSession(authOptions);
     
     if (!session?.user || !['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) {
@@ -21,6 +26,7 @@ export async function PUT(
     const data = await request.json();
     const { id } = params;
 
+    const AdminService = await import('@/lib/services/admin-service');
     const updatedMember = await AdminService.updateTeamMember(id, data);
 
     // Log the activity
@@ -46,6 +52,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Import dependencies dynamically
+    const { getServerSession } = await import('next-auth/next');
+    const { authOptions } = await import('@/lib/auth');
+    
     const session = await getServerSession(authOptions);
     
     if (!session?.user || !['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) {
@@ -65,6 +75,7 @@ export async function DELETE(
       );
     }
 
+    const AdminService = await import('@/lib/services/admin-service');
     await AdminService.deleteTeamMember(id);
 
     // Log the activity
