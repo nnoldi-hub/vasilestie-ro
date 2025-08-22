@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import * as AdminService from '@/lib/services/admin-service';
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+
 // GET /api/admin/activity - Get activity logs
 export async function GET(request: NextRequest) {
   try {

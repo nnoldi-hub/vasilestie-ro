@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+
 const subscribeSchema = z.object({
   email: z.string().email('Email invalid'),
   categories: z.array(z.string()).optional()
