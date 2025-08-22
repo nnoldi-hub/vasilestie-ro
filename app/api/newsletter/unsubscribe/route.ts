@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
+  // Import Prisma dynamically to avoid build-time issues
+  const { prisma } = await import('@/lib/prisma');
+
   try {
     const token = request.nextUrl.searchParams.get('token');
     

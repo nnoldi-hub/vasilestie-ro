@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
+export const runtime = 'nodejs';
 
 export async function GET() {
+  // Import dependencies dynamically
+  const { getServerSession } = await import('next-auth');
+  const { authOptions } = await import('@/lib/auth');
+  const { PrismaClient } = await import('@prisma/client');
+  const prisma = new PrismaClient();
+
   try {
     const session = await getServerSession(authOptions);
 
@@ -108,6 +110,11 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  const { getServerSession } = await import('next-auth');
+  const { authOptions } = await import('@/lib/auth');
+  const { PrismaClient } = await import('@prisma/client');
+  const prisma = new PrismaClient();
+
   try {
     const session = await getServerSession(authOptions);
 

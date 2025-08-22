@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const subscribeSchema = z.object({
   email: z.string().email('Email invalid'),
@@ -12,6 +12,9 @@ const subscribeSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Import Prisma dynamically to avoid build-time issues
+  const { prisma } = await import('@/lib/prisma');
+
   try {
     const body = await request.json();
     const { email, categories } = subscribeSchema.parse(body);
@@ -94,6 +97,9 @@ export async function POST(request: NextRequest) {
 
 // Confirm subscription
 export async function PATCH(request: NextRequest) {
+  // Import Prisma dynamically to avoid build-time issues
+  const { prisma } = await import('@/lib/prisma');
+
   try {
     const token = request.nextUrl.searchParams.get('token');
     

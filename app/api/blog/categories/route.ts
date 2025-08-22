@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET() {
   try {
+    // Import Prisma dynamically to avoid build-time issues
+    const { prisma } = await import('@/lib/prisma');
+    
     const categories = await prisma.blogCategory.findMany({
       include: {
         _count: {
