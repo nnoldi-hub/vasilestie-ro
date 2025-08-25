@@ -1,8 +1,5 @@
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient, UserRole, AdminAction } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-
-// Import admin action type
-type AdminAction = 'USER_CREATED' | 'USER_UPDATED' | 'USER_DELETED' | 'CRAFTSMAN_VERIFIED' | 'CRAFTSMAN_REJECTED' | 'REVIEW_MODERATED' | 'BOOKING_UPDATED' | 'CATEGORY_CREATED' | 'CATEGORY_UPDATED' | 'SYSTEM_CONFIG_CHANGED' | 'LOGIN' | 'LOGOUT';
 
 const prisma = new PrismaClient();
 
