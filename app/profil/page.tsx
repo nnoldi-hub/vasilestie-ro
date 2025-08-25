@@ -68,8 +68,10 @@ function ProfileContent() {
                 </CardTitle>
                 <CardDescription>
                   <div className="flex items-center justify-center gap-2">
-                    <Badge variant={user.role === ('CRAFTSMAN' as any) ? 'default' : 'secondary'}>
-                      {user.role === ('CRAFTSMAN' as any) ? 'Meseriași' : 'Client'}
+                    <Badge variant={user.role === ('CRAFTSMAN' as any) || user.role === ('ADMINISTRATOR' as any) || user.role === ('COLLABORATOR' as any) ? 'default' : 'secondary'}>
+                      {user.role === ('ADMINISTRATOR' as any) ? 'Administrator' :
+                       user.role === ('COLLABORATOR' as any) ? 'Colaborator' :
+                       user.role === ('CRAFTSMAN' as any) ? 'Meseriaș' : 'Client'}
                     </Badge>
                   </div>
                 </CardDescription>
@@ -106,7 +108,11 @@ function ProfileContent() {
 
                 <div className="space-y-2">
                   <Label>Rol</Label>
-                  <Input value={user.role || ''} disabled className="bg-gray-50" />
+                  <Input value={
+                    user.role === ('ADMINISTRATOR' as any) ? 'Administrator' :
+                    user.role === ('COLLABORATOR' as any) ? 'Colaborator' :
+                    user.role === ('CRAFTSMAN' as any) ? 'Meseriaș' : 'Client'
+                  } disabled className="bg-gray-50" />
                 </div>
 
                 <div className="pt-6 border-t">

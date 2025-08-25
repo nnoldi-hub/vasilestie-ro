@@ -222,9 +222,10 @@ function EditProfileContent() {
                 </CardTitle>
                 <CardDescription>
                   <div className="flex items-center justify-center gap-2">
-                    <Badge variant={profile?.role === 'ADMIN' || profile?.role === 'SUPER_ADMIN' ? 'default' : 'secondary'}>
-                      {profile?.role === 'SUPER_ADMIN' ? 'Super Admin' : 
-                       profile?.role === 'ADMIN' ? 'Admin' : 'Client'}
+                    <Badge variant={profile?.role === 'ADMINISTRATOR' || profile?.role === 'COLLABORATOR' ? 'default' : 'secondary'}>
+                      {profile?.role === 'ADMINISTRATOR' ? 'Administrator' : 
+                       profile?.role === 'COLLABORATOR' ? 'Colaborator' :
+                       profile?.role === 'CRAFTSMAN' ? 'Meseriaș' : 'Client'}
                     </Badge>
                   </div>
                 </CardDescription>
@@ -280,8 +281,9 @@ function EditProfileContent() {
                   <div className="space-y-2">
                     <Label>Rol</Label>
                     <Input 
-                      value={profile?.role === 'SUPER_ADMIN' ? 'Super Admin' : 
-                             profile?.role === 'ADMIN' ? 'Admin' : 'Client'} 
+                      value={profile?.role === 'ADMINISTRATOR' ? 'Administrator' : 
+                             profile?.role === 'COLLABORATOR' ? 'Colaborator' :
+                             profile?.role === 'CRAFTSMAN' ? 'Meseriaș' : 'Client'} 
                       disabled 
                       className="bg-gray-50" 
                     />
