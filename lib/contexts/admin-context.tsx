@@ -10,13 +10,10 @@ type TeamMember = AdminService.TeamMember;
 // Helper functions
 function getDepartmentForRole(role: string): string {
   switch (role) {
-    case 'SUPER_ADMIN':
-    case 'ADMIN':
+    case 'ADMINISTRATOR':
       return 'Administrare';
-    case 'MODERATOR':
-      return 'Moderare';
-    case 'SUPPORT':
-      return 'Suport Client';
+    case 'COLLABORATOR':
+      return 'Colaborator';
     default:
       return 'General';
   }

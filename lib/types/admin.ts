@@ -1,12 +1,8 @@
 // Tipuri pentru sistemul de administrare VasileStie.ro
 
 export type UserRole = 
-  | 'admin' 
-  | 'verificator' 
-  | 'suport' 
-  | 'marketing' 
-  | 'moderator' 
-  | 'content-manager';
+  | 'ADMINISTRATOR' 
+  | 'COLLABORATOR';
 
 export type UserStatus = 'active' | 'inactive' | 'pending';
 
@@ -113,83 +109,23 @@ export const PERMISSIONS: Permission[] = [
 ];
 
 export const ROLES: Record<UserRole, RoleConfig> = {
-  admin: {
-    id: 'admin',
+  ADMINISTRATOR: {
+    id: 'ADMINISTRATOR',
     name: 'Administrator',
-    description: 'Acces complet la toate funcționalitățile',
+    description: 'Acces complet la toate funcționalitățile sistemului',
     color: '#DC2626', // red-600
     permissions: PERMISSIONS.map(p => p.id), // Toate permisiunile
   },
-  verificator: {
-    id: 'verificator',
-    name: 'Verificator Meșteri',
-    description: 'Se ocupă de verificarea și aprobarea meșterilor',
+  COLLABORATOR: {
+    id: 'COLLABORATOR',
+    name: 'Colaborator',
+    description: 'Acces la funcționalități selectate de administrator',
     color: '#2563EB', // blue-600
     permissions: [
+      // Permisiuni de bază - pot fi modificate de administrator
       'users.view',
       'craftsmen.view',
-      'craftsmen.verify',
-      'craftsmen.edit',
-      'craftsmen.suspend',
       'system.logs',
-    ],
-  },
-  suport: {
-    id: 'suport',
-    name: 'Suport Clienți',
-    description: 'Oferă suport clienților și rezolvă probleme',
-    color: '#059669', // emerald-600
-    permissions: [
-      'users.view',
-      'craftsmen.view',
-      'bookings.view',
-      'bookings.manage',
-      'bookings.support',
-      'system.logs',
-    ],
-  },
-  marketing: {
-    id: 'marketing',
-    name: 'Marketing',
-    description: 'Gestionează campanii și comunicarea',
-    color: '#7C3AED', // violet-600
-    permissions: [
-      'users.view',
-      'craftsmen.view',
-      'content.view',
-      'content.create',
-      'content.edit',
-      'content.publish',
-      'marketing.campaigns',
-      'marketing.analytics',
-      'marketing.emails',
-    ],
-  },
-  moderator: {
-    id: 'moderator',
-    name: 'Moderator',
-    description: 'Moderează conținutul și interacțiunile',
-    color: '#EA580C', // orange-600
-    permissions: [
-      'users.view',
-      'craftsmen.view',
-      'content.view',
-      'content.edit',
-      'bookings.view',
-      'system.logs',
-    ],
-  },
-  'content-manager': {
-    id: 'content-manager',
-    name: 'Content Manager',
-    description: 'Gestionează conținutul platformei',
-    color: '#0891B2', // cyan-600
-    permissions: [
-      'content.view',
-      'content.create',
-      'content.edit',
-      'content.publish',
-      'marketing.analytics',
     ],
   },
 };

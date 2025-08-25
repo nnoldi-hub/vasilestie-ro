@@ -171,7 +171,7 @@ export function Header() {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  {(session.user.role === 'SUPER_ADMIN' || session.user.role === 'ADMIN') && (
+                  {session.user.role === 'ADMINISTRATOR' && (
                     <DropdownMenuItem onClick={() => router.push('/admin')}>
                       <Shield className="mr-2 h-4 w-4" />
                       <span>Admin Panel</span>
@@ -322,7 +322,7 @@ export function Header() {
                       <p className="text-sm text-gray-500">{session.user.email}</p>
                     </div>
                   </div>
-                  {(session.user.role === 'SUPER_ADMIN' || session.user.role === 'ADMIN') && (
+                  {session.user.role === 'ADMINISTRATOR' && (
                     <Button
                       variant="outline"
                       className="w-full justify-start"

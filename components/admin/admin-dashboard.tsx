@@ -159,12 +159,9 @@ export function AdminDashboard() {
                   <div className="flex items-center">
                     <div className="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
                     <span className="text-sm font-medium capitalize">
-                      {role === 'admin' ? 'Administrator' :
-                       role === 'verificator' ? 'Verificator' :
-                       role === 'suport' ? 'Suport' :
-                       role === 'marketing' ? 'Marketing' :
-                       role === 'moderator' ? 'Moderator' :
-                       'Content Manager'}
+                      {role === 'ADMINISTRATOR' ? 'Administrator' :
+                       role === 'COLLABORATOR' ? 'Colaborator' :
+                       role}
                     </span>
                   </div>
                   <Badge variant="secondary">{count}</Badge>

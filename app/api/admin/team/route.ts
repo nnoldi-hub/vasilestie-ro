@@ -13,7 +13,7 @@ export async function GET() {
     
     const session = await getServerSession(authOptions);
     
-    if (!session?.user || !['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) {
+    if (!session?.user || !['ADMINISTRATOR', 'COLLABORATOR'].includes(session.user.role)) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     
     // În development, permitem și cereri fără sesiune pentru testare
     const isDevelopment = process.env.NODE_ENV === 'development';
-    const hasValidSession = session?.user && ['SUPER_ADMIN', 'ADMIN'].includes(session.user.role);
+    const hasValidSession = session?.user && ['ADMINISTRATOR', 'COLLABORATOR'].includes(session.user.role);
     
     if (!hasValidSession && !isDevelopment) {
       return NextResponse.json(
@@ -84,15 +84,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate role
-    const validRoles = ['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'SUPPORT'];
-    if (!validRoles.includes(userData.role)) {
-      console.error('🔧 Invalid role:', userData.role);
+    // Validate role - acceptăm roluri din Prisma schema
+    const validRoles = ['ADMINISTRATOR', 'COLLABORATOR'];
+    
+    // Mapare pentru roluri vechi sau formate diferite
+    const roleMapping: Record<string, string> = {
+      'admin': 'ADMINISTRATOR',
+      'administrator': 'ADMINISTRATOR',
+      'ADMIN': 'ADMINISTRATOR',
+      'SUPER_ADMIN': 'ADMINISTRATOR',
+      'verificator': 'COLLABORATOR',
+      'suport': 'COLLABORATOR',
+      'marketing': 'COLLABORATOR',
+      'moderator': 'COLLABORATOR',
+      'content-manager': 'COLLABORATOR',
+      'collaborator': 'COLLABORATOR',
+      'SUPPORT': 'COLLABORATOR',
+      'MODERATOR': 'COLLABORATOR'
+    };
+    
+    // Convertește rolul la formatul Prisma dacă e necesar
+    const mappedRole = roleMapping[userData.role] || userData.role;
+    
+    if (!validRoles.includes(mappedRole)) {
+      console.error('🔧 Invalid role:', userData.role, 'mapped to:', mappedRole);
       return NextResponse.json(
-        { error: 'Invalid role' },
+        { error: `Invalid role: ${userData.role}. Valid roles are: ${validRoles.join(', ')}` },
         { status: 400 }
       );
     }
+    
+    // Folosește rolul mapat
+    userData.role = mappedRole;
 
     console.log('🔧 Creating member with AdminService...');
 

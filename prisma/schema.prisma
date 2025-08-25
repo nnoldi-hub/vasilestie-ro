@@ -207,10 +207,8 @@ model AdminLog {
 enum UserRole {
   USER
   CRAFTSMAN
-  ADMIN
-  SUPER_ADMIN
-  MODERATOR
-  SUPPORT
+  ADMINISTRATOR
+  COLLABORATOR
 }
 
 enum ContactStatus {

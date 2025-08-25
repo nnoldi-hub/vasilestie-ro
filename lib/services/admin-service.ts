@@ -5,7 +5,7 @@ export interface TeamMember {
   id: string;
   name: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'MODERATOR' | 'SUPPORT';
+  role: 'ADMINISTRATOR' | 'COLLABORATOR';
   status: 'active' | 'inactive';
   lastActive: Date;
   joinedAt: Date;
@@ -16,7 +16,7 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
   const users = await prisma.user.findMany({
     where: {
       role: {
-        in: ['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'SUPPORT']
+        in: ['ADMINISTRATOR', 'COLLABORATOR']
       }
     },
     orderBy: {
@@ -43,7 +43,7 @@ export async function createTeamMember(data: Partial<TeamMember>): Promise<TeamM
     data: {
       name: data.name || '',
       email: data.email!,
-      role: data.role || 'SUPPORT',
+      role: data.role || 'COLLABORATOR',
       emailVerified: new Date()
     }
   });

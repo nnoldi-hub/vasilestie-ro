@@ -53,12 +53,12 @@ export function MemberFormDialog({ open, onOpenChange, member, mode }: MemberFor
     lastName: '',
     email: '',
     phone: '',
-    role: 'suport',
+    role: 'COLLABORATOR',
     department: '',
     sendWelcomeEmail: true,
   });
 
-  const [selectedRole, setSelectedRole] = useState<UserRole>('suport');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('COLLABORATOR');
   const [customPermissions, setCustomPermissions] = useState<string[]>([]);
 
   // Reset form when dialog opens/closes or member changes
@@ -80,11 +80,11 @@ export function MemberFormDialog({ open, onOpenChange, member, mode }: MemberFor
           lastName: '',
           email: '',
           phone: '',
-          role: 'suport',
+          role: 'COLLABORATOR',
           department: '',
           sendWelcomeEmail: true,
         });
-        setSelectedRole('suport');
+        setSelectedRole('COLLABORATOR');
         setCustomPermissions([]);
       }
     }
@@ -92,6 +92,9 @@ export function MemberFormDialog({ open, onOpenChange, member, mode }: MemberFor
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🔧 Form submitted with data:', formData);
+    console.log('🔧 Selected role:', selectedRole);
+    console.log('🔧 Mode:', mode);
     setLoading(true);
 
     try {
@@ -102,9 +105,14 @@ export function MemberFormDialog({ open, onOpenChange, member, mode }: MemberFor
           customPermissions: customPermissions.length > 0 ? customPermissions : undefined,
         };
         
+        console.log('🔧 Calling actions.createTeamMember with:', createData);
         const success = await actions.createTeamMember(createData);
+        console.log('🔧 createTeamMember returned:', success);
         if (success) {
+          console.log('🔧 Success! Closing dialog.');
           onOpenChange(false);
+        } else {
+          console.log('🔧 Failed to create member');
         }
       } else if (mode === 'edit' && member) {
         const updateData: UpdateTeamMemberRequest = {
@@ -118,8 +126,9 @@ export function MemberFormDialog({ open, onOpenChange, member, mode }: MemberFor
         }
       }
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('🔧 Form submission error:', error);
     } finally {
+      console.log('🔧 Setting loading to false');
       setLoading(false);
     }
   };
@@ -311,30 +320,32 @@ export function MemberFormDialog({ open, onOpenChange, member, mode }: MemberFor
                     </div>
                   </div>
 
-                  {/* Custom Permissions */}
-                  <div>
-                    <Label>Permisiuni Suplimentare</Label>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Adăugați permisiuni suplimentare față de cele implicite pentru rol
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {allPermissions
-                        .filter(perm => !roleConfig.permissions.includes(perm))
-                        .map((permission) => (
-                          <div key={permission} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={permission}
-                              checked={customPermissions.includes(permission)}
-                              onCheckedChange={() => handlePermissionToggle(permission)}
-                            />
-                            <Label htmlFor={permission} className="text-sm">
-                              {permission}
-                            </Label>
-                          </div>
-                        ))
-                      }
+                  {/* Custom Permissions - doar pentru COLLABORATOR */}
+                  {selectedRole === 'COLLABORATOR' && (
+                    <div>
+                      <Label>Permisiuni Suplimentare</Label>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Selectează permisiuni suplimentare pentru acest colaborator
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {allPermissions
+                          .filter(perm => !roleConfig.permissions.includes(perm))
+                          .map((permission) => (
+                            <div key={permission} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={permission}
+                                checked={customPermissions.includes(permission)}
+                                onCheckedChange={() => handlePermissionToggle(permission)}
+                              />
+                              <Label htmlFor={permission} className="text-sm">
+                                {permission}
+                              </Label>
+                            </div>
+                          ))
+                        }
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

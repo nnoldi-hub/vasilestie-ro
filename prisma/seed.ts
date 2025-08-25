@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-// Import enums directly from Prisma generated types
-type UserRole = 'USER' | 'CRAFTSMAN' | 'ADMIN' | 'SUPER_ADMIN' | 'MODERATOR' | 'SUPPORT';
+// Import admin action type
 type AdminAction = 'USER_CREATED' | 'USER_UPDATED' | 'USER_DELETED' | 'CRAFTSMAN_VERIFIED' | 'CRAFTSMAN_REJECTED' | 'REVIEW_MODERATED' | 'BOOKING_UPDATED' | 'CATEGORY_CREATED' | 'CATEGORY_UPDATED' | 'SYSTEM_CONFIG_CHANGED' | 'LOGIN' | 'LOGOUT';
 
 const prisma = new PrismaClient();
@@ -68,7 +67,7 @@ async function main() {
       name: 'Super Admin',
       email: 'admin@vasilestie.ro',
       password: hashedPassword,
-      role: 'SUPER_ADMIN',
+      role: 'ADMINISTRATOR',
       emailVerified: new Date()
     }
   });

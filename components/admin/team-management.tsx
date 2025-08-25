@@ -122,7 +122,7 @@ export function TeamManagement() {
       firstName: member.name.split(' ')[0] || '',
       lastName: member.name.split(' ').slice(1).join(' ') || '',
       email: member.email,
-      role: 'admin', // Map to admin types role
+      role: 'ADMINISTRATOR', // Map to admin types role
       status: member.status as UserStatus,
       createdAt: member.joinedAt,
       updatedAt: member.joinedAt,
@@ -139,7 +139,7 @@ export function TeamManagement() {
       firstName: member.name.split(' ')[0] || '',
       lastName: member.name.split(' ').slice(1).join(' ') || '',
       email: member.email,
-      role: 'admin', // Map to admin types role
+      role: 'ADMINISTRATOR', // Map to admin types role
       status: member.status as UserStatus,
       createdAt: member.joinedAt,
       updatedAt: member.joinedAt,
@@ -171,10 +171,8 @@ export function TeamManagement() {
 
   const getServiceRoleLabel = (role: AdminService.TeamMember['role']) => {
     const roleNames: Record<string, string> = {
-      'SUPER_ADMIN': 'Super Administrator',
-      'ADMIN': 'Administrator',
-      'MODERATOR': 'Moderator',
-      'SUPPORT': 'Suport'
+      'ADMINISTRATOR': 'Administrator',
+      'COLLABORATOR': 'Colaborator'
     };
     return roleNames[role] || role;
   };

@@ -38,7 +38,7 @@ export default function SignInPage() {
 
       // Get session to check user role
       const session = await getSession();
-      if (session?.user?.role === 'SUPER_ADMIN' || session?.user?.role === 'ADMIN') {
+      if (session?.user?.role === 'ADMINISTRATOR') {
         router.push('/admin');
       } else {
         router.push('/');
