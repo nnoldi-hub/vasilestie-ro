@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ interface UserProfile {
 }
 
 function EditProfileContent() {
-  const { data: session, update } = useSession();
+  const { data: session, update, status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -41,12 +41,17 @@ function EditProfileContent() {
     name: '',
   });
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/user/profile');
       
       if (!response.ok) {
+        if (response.status === 401) {
+          // Redirect to signin if not authenticated
+          router.push('/auth/signin');
+          return;
+        }
         throw new Error('Failed to fetch profile');
       }
       
@@ -65,49 +70,42 @@ function EditProfileContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router, toast]);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/user/profile');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch profile');
-        }
-        
-        const data = await response.json();
-        setProfile(data.user);
-        setFormData({
-          name: data.user.name || '',
-        });
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-        toast({
-          title: "Eroare",
-          description: "Nu s-a putut încărca profilul.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Wait for session to load before checking
+    if (status === 'loading') return;
+    
+    if (!session) {
+      router.push('/auth/signin');
+      return;
+    }
+
+    // Dacă e meseriaș, redirecționează la pagina lui specifică
+    if (session.user?.role === ('CRAFTSMAN' as any)) {
+      router.push('/mesterias/profil');
+      return;
+    }
 
     fetchProfile();
-  }, [toast]);
-  
-  if (!session) {
-    redirect('/auth/signin');
-  }
-  
-  const user = session.user;
+  }, [session, status, router, fetchProfile]);
 
-  if (!user) return null;
-
-  // Dacă e meseriaș, redirecționează la pagina lui specifică
-  if (user.role === ('CRAFTSMAN' as any)) {
-    redirect('/mesterias/profil');
+  // Show loading while session is loading
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+              <div className="h-64 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   const handleSave = async () => {
@@ -132,13 +130,15 @@ function EditProfileContent() {
       setProfile(data.user);
       
       // Update the session with new user data
-      await update({
-        ...session,
-        user: {
-          ...session.user,
-          name: data.user.name,
-        }
-      });
+      if (session) {
+        await update({
+          ...session,
+          user: {
+            ...session.user,
+            name: data.user.name,
+          }
+        });
+      }
       
       toast({
         title: "Succes!",

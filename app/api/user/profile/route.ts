@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // GET - Preia profilul utilizatorului curent
 export async function GET() {
+  // Import dependencies dynamically
+  const { getServerSession } = await import('next-auth');
+  const { authOptions } = await import('@/lib/auth');
+  const { PrismaClient } = await import('@prisma/client');
+  const prisma = new PrismaClient();
+
   try {
     const session = await getServerSession(authOptions);
     
@@ -45,11 +50,19 @@ export async function GET() {
       { error: 'Eroare la încărcarea profilului' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
 // PUT - Actualizează profilul utilizatorului
 export async function PUT(request: NextRequest) {
+  // Import dependencies dynamically
+  const { getServerSession } = await import('next-auth');
+  const { authOptions } = await import('@/lib/auth');
+  const { PrismaClient } = await import('@prisma/client');
+  const prisma = new PrismaClient();
+
   try {
     const session = await getServerSession(authOptions);
     
@@ -99,5 +112,7 @@ export async function PUT(request: NextRequest) {
       { error: 'Eroare la actualizarea profilului' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
