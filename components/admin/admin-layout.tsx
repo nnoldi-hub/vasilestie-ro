@@ -7,6 +7,7 @@ import { TeamManagement } from '@/components/admin/team-management';
 import { ActivitySection } from '@/components/admin/activity-section';
 import { ReportsSection } from '@/components/admin/reports-section';
 import { SettingsSection } from '@/components/admin/settings-section';
+import { CraftsmenManagement } from '@/components/admin/craftsmen-management';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,10 +19,11 @@ import {
   Shield,
   BarChart3,
   MessageSquare,
-  FileText
+  FileText,
+  Hammer
 } from 'lucide-react';
 
-type AdminSection = 'dashboard' | 'team' | 'activity' | 'settings' | 'reports';
+type AdminSection = 'dashboard' | 'team' | 'craftsmen' | 'activity' | 'settings' | 'reports';
 
 const navigation = [
   {
@@ -35,6 +37,12 @@ const navigation = [
     name: 'Echipa',
     icon: Users,
     description: 'Gestionare membri',
+  },
+  {
+    id: 'craftsmen' as AdminSection,
+    name: 'Meșteșugari',
+    icon: Hammer,
+    description: 'Aprobare conturi',
   },
   {
     id: 'activity' as AdminSection,
@@ -85,6 +93,8 @@ export function AdminLayout() {
         return <AdminDashboard />;
       case 'team':
         return <TeamManagement />;
+      case 'craftsmen':
+        return <CraftsmenManagement />;
       case 'activity':
         return <ActivitySection />;
       case 'reports':

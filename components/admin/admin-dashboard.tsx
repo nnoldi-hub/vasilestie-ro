@@ -266,29 +266,30 @@ export function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Alertă pentru membri în așteptare */}
-      {false && ( // No pending status in current TeamMember type
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="flex items-center p-4">
-            <AlertCircle className="w-5 h-5 text-orange-500 mr-3" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-orange-800">
-                Aveți 0 membri în așteptarea aprobării
-              </p>
-              <p className="text-xs text-orange-600">
-                Verificați și activați conturile noi pentru a le permite accesul la platformă
-              </p>
-            </div>
-            <Button 
-              size="sm" 
-              className="bg-orange-500 hover:bg-orange-600"
-              onClick={handleViewTeam}
-            >
-              Vezi membrii
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      {/* Alertă pentru mesteri în așteptare */}
+      <Card className="border-orange-200 bg-orange-50">
+        <CardContent className="flex items-center p-4">
+          <AlertCircle className="w-5 h-5 text-orange-500 mr-3" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-orange-800">
+              Verifică meșteșugarii în așteptarea aprobării
+            </p>
+            <p className="text-xs text-orange-600">
+              Accesează secțiunea &quot;Meșteșugari&quot; pentru a aproba conturile noi
+            </p>
+          </div>
+          <Button 
+            size="sm" 
+            className="bg-orange-500 hover:bg-orange-600"
+            onClick={() => {
+              window.location.hash = '#craftsmen';
+              window.dispatchEvent(new HashChangeEvent('hashchange'));
+            }}
+          >
+            Vezi Meșteșugari
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card>
