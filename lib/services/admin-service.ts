@@ -37,6 +37,8 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
 }
 
 export async function createTeamMember(data: Partial<TeamMember>): Promise<TeamMember> {
+  console.log('🔧 AdminService.createTeamMember called with:', data);
+  
   const user = await prisma.user.create({
     data: {
       name: data.name || '',
@@ -45,6 +47,8 @@ export async function createTeamMember(data: Partial<TeamMember>): Promise<TeamM
       emailVerified: new Date()
     }
   });
+
+  console.log('🔧 User created in database:', user);
 
   return {
     id: user.id,

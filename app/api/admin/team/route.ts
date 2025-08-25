@@ -64,9 +64,20 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await request.json();
+    console.log('🔧 Received data:', data);
+    
+    // Extract only the fields we need for User model
+    const userData = {
+      name: data.name?.trim(),
+      email: data.email?.trim(),
+      role: data.role
+    };
+    
+    console.log('🔧 Cleaned user data:', userData);
     
     // Validate required fields
-    if (!data.name || !data.email || !data.role) {
+    if (!userData.name || !userData.email || !userData.role) {
+      console.error('🔧 Missing required fields:', { name: !!userData.name, email: !!userData.email, role: !!userData.role });
       return NextResponse.json(
         { error: 'Missing required fields: name, email, role' },
         { status: 400 }
@@ -75,19 +86,24 @@ export async function POST(request: NextRequest) {
 
     // Validate role
     const validRoles = ['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'SUPPORT'];
-    if (!validRoles.includes(data.role)) {
+    if (!validRoles.includes(userData.role)) {
+      console.error('🔧 Invalid role:', userData.role);
       return NextResponse.json(
         { error: 'Invalid role' },
         { status: 400 }
       );
     }
 
+    console.log('🔧 Creating member with AdminService...');
+
     const AdminService = await import('@/lib/services/admin-service');
     const newMember = await AdminService.createTeamMember({
-      name: data.name,
-      email: data.email,
-      role: data.role
+      name: userData.name,
+      email: userData.email,
+      role: userData.role
     });
+
+    console.log('🔧 Member created successfully:', newMember);
 
     // Log the activity (doar dacă avem sesiune validă)
     if (session?.user?.id) {

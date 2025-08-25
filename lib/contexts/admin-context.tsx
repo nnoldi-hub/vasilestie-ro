@@ -210,24 +210,35 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     async createTeamMember(data: any) {
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
+        console.log('🔧 Creating team member with data:', data);
+        
+        const requestBody = {
+          name: `${data.firstName} ${data.lastName}`.trim(),
+          email: data.email,
+          role: data.role
+        };
+        
+        console.log('🔧 Request body:', requestBody);
+        
         const response = await fetch('/api/admin/team', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            name: `${data.firstName} ${data.lastName}`.trim(),
-            email: data.email,
-            role: data.role
-          }),
+          body: JSON.stringify(requestBody),
         });
+
+        console.log('🔧 Response status:', response.status);
+        console.log('🔧 Response ok:', response.ok);
 
         if (!response.ok) {
           const errorData = await response.json();
+          console.error('🔧 Error response:', errorData);
           throw new Error(errorData.error || 'Failed to create team member');
         }
 
         const newMember = await response.json();
+        console.log('🔧 Created member:', newMember);
         
         // Convert to context format
         const convertedMember = {
