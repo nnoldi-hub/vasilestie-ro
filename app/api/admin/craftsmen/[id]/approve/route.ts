@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -12,7 +13,7 @@ export async function PATCH(
 ) {
   try {
     // Check authentication and authorization
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user || (session.user as any).role !== 'ADMIN' && (session.user as any).role !== 'SUPER_ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -43,7 +44,7 @@ export async function PATCH(
     await prisma.adminLog.create({
       data: {
         userId: (session.user as any).id,
-        action: 'CRAFTSMAN_APPROVED',
+        action: 'CRAFTSMAN_VERIFIED',
         details: `Approved craftsman: ${updatedCraftsman.user.name} (${updatedCraftsman.user.email})`,
       }
     });
