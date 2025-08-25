@@ -5,6 +5,15 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 
+// Validate required environment variables
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error('NEXTAUTH_SECRET is required for NextAuth.js');
+}
+
+if (!process.env.NEXTAUTH_URL) {
+  console.warn('NEXTAUTH_URL not set, this may cause issues in production');
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
