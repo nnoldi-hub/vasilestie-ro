@@ -35,8 +35,8 @@ function ProfileContent() {
     if (user.role === ('CRAFTSMAN' as any)) {
       redirect('/mesterias/profil');
     } else {
-      // Pentru utilizatori generali, eventual o pagină de editare separată
-      alert('Funcționalitatea de editare va fi disponibilă în curând!');
+      // Pentru utilizatori generali (admin/superadmin), redirecționează la pagina de editare
+      window.location.href = '/profil/editare';
     }
   };
 
