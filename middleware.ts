@@ -21,7 +21,7 @@ export default withAuth(
         
         // Require authentication for admin routes
         if (req.nextUrl.pathname.startsWith('/admin')) {
-          return token?.role === 'ADMINISTRATOR';
+          return (token?.role as string) === 'ADMINISTRATOR';
         }
         
         // Require authentication for profile routes
