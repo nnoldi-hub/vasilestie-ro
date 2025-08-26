@@ -7,6 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
   Table,
   TableBody,
@@ -38,7 +48,7 @@ interface User {
   name: string;
   email: string;
   role: string;
-  status: 'active' | 'inactive';
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   createdAt: string;
   lastLogin?: string;
 }
@@ -50,6 +60,14 @@ export function UsersSection() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'USER' | 'CRAFTSMAN' | 'COLLABORATOR' | 'ADMINISTRATOR'>('all');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [emailContent, setEmailContent] = useState({
+    subject: '',
+    message: ''
+  });
 
   const loadUsers = async () => {
     try {
@@ -78,12 +96,104 @@ export function UsersSection() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // loadUsers is stable
 
+  // Toggle user status (activate/deactivate)
+  const handleToggleUserStatus = async (userId: string, newStatus: 'ACTIVE' | 'INACTIVE') => {
+    if (!state.permissions.canEditUsers) {
+      toast({
+        title: "Eroare",
+        description: "Nu aveți permisiunea să modificați utilizatori",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setActionLoading(userId);
+      const response = await fetch(`/api/colaborator/users/${userId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        await loadUsers(); // Reload users list
+        toast({
+          title: "Succes",
+          description: `Utilizatorul a fost ${newStatus === 'ACTIVE' ? 'activat' : 'dezactivat'} cu succes`
+        });
+      } else {
+        throw new Error('Failed to update user status');
+      }
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      toast({
+        title: "Eroare",
+        description: `Nu s-a putut ${newStatus === 'ACTIVE' ? 'activa' : 'dezactiva'} utilizatorul`,
+        variant: "destructive"
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Send email to user
+  const handleSendEmail = async () => {
+    if (!selectedUser || !emailContent.subject.trim() || !emailContent.message.trim()) {
+      toast({
+        title: "Eroare",
+        description: "Subiectul și mesajul sunt obligatorii",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setActionLoading(selectedUser.id);
+      const response = await fetch('/api/colaborator/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          subject: emailContent.subject,
+          message: emailContent.message,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Succes",
+          description: "Email-ul a fost trimis cu succes"
+        });
+        setShowEmailDialog(false);
+        setEmailContent({ subject: '', message: '' });
+        setSelectedUser(null);
+      } else {
+        throw new Error('Failed to send email');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast({
+        title: "Eroare",
+        description: "Nu s-a putut trimite email-ul",
+        variant: "destructive"
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
+      case 'ACTIVE':
         return <Badge variant="default" className="bg-green-100 text-green-800">Activ</Badge>;
-      case 'inactive':
+      case 'INACTIVE':
         return <Badge variant="secondary" className="bg-red-100 text-red-800">Inactiv</Badge>;
+      case 'SUSPENDED':
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Suspendat</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -241,24 +351,43 @@ export function UsersSection() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setShowProfileDialog(true);
+                            }}
+                          >
                             <Eye className="h-4 w-4 mr-2" />
                             Vezi profil
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setShowEmailDialog(true);
+                            }}
+                          >
                             <Mail className="h-4 w-4 mr-2" />
                             Trimite email
                           </DropdownMenuItem>
                           {state.permissions.canEditUsers && (
                             <>
-                              <DropdownMenuItem>
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                Activează
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <UserX className="h-4 w-4 mr-2" />
-                                Dezactivează
-                              </DropdownMenuItem>
+                              {user.status === 'INACTIVE' ? (
+                                <DropdownMenuItem
+                                  onClick={() => handleToggleUserStatus(user.id, 'ACTIVE')}
+                                  disabled={actionLoading === user.id}
+                                >
+                                  <UserCheck className="h-4 w-4 mr-2" />
+                                  Activează
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={() => handleToggleUserStatus(user.id, 'INACTIVE')}
+                                  disabled={actionLoading === user.id}
+                                >
+                                  <UserX className="h-4 w-4 mr-2" />
+                                  Dezactivează
+                                </DropdownMenuItem>
+                              )}
                             </>
                           )}
                         </DropdownMenuContent>
@@ -271,6 +400,124 @@ export function UsersSection() {
           )}
         </CardContent>
       </Card>
+
+      {/* Profile Dialog */}
+      <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Profil Utilizator</DialogTitle>
+            <DialogDescription>
+              Informații detaliate despre utilizator
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-700">Nume:</Label>
+                    <p className="text-gray-900 mt-1">{selectedUser.name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-700">Email:</Label>
+                    <p className="text-gray-900 mt-1">{selectedUser.email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-700">Rol:</Label>
+                    <div className="mt-1">
+                      {getRoleBadge(selectedUser.role)}
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-700">Status:</Label>
+                    <div className="mt-1">
+                      {getStatusBadge(selectedUser.status)}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-700">Data înregistrării:</Label>
+                    <p className="text-gray-900 mt-1">
+                      {new Date(selectedUser.createdAt).toLocaleDateString('ro-RO', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-700">Ultima conectare:</Label>
+                    <p className="text-gray-900 mt-1">
+                      {selectedUser.lastLogin ? new Date(selectedUser.lastLogin).toLocaleDateString('ro-RO') : 'Nu s-a conectat niciodată'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowProfileDialog(false)}>
+              Închide
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Dialog */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Trimite Email</DialogTitle>
+            <DialogDescription>
+              Trimite un email către {selectedUser?.name} ({selectedUser?.email})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="email-subject">Subiect *</Label>
+              <Input
+                id="email-subject"
+                value={emailContent.subject}
+                onChange={(e) => setEmailContent(prev => ({ ...prev, subject: e.target.value }))}
+                placeholder="Introduceți subiectul email-ului"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email-message">Mesaj *</Label>
+              <Textarea
+                id="email-message"
+                value={emailContent.message}
+                onChange={(e) => setEmailContent(prev => ({ ...prev, message: e.target.value }))}
+                placeholder="Introduceți mesajul email-ului"
+                rows={6}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEmailDialog(false)}>
+              Anulează
+            </Button>
+            <Button 
+              onClick={handleSendEmail}
+              disabled={actionLoading === selectedUser?.id || !emailContent.subject.trim() || !emailContent.message.trim()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {actionLoading === selectedUser?.id ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Se trimite...
+                </>
+              ) : (
+                <>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Trimite Email
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

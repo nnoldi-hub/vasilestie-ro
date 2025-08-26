@@ -42,15 +42,17 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String     @unique
   password      String?
   emailVerified DateTime?
   image         String?
-  role          UserRole  @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          UserRole   @default(USER)
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  lastLogin     DateTime?
 
   // Relations
   accounts        Account[]
@@ -63,6 +65,10 @@ model User {
   // Blog relations
   blogPosts    BlogPost[]    @relation("BlogAuthor")
   blogComments BlogComment[] @relation("BlogComments")
+  
+  // Email relations
+  sentEmails     EmailLog[] @relation("SentEmails")
+  receivedEmails EmailLog[] @relation("ReceivedEmails")
 }
 
 model VerificationToken {
@@ -375,9 +381,30 @@ model Newsletter {
   @@map("newsletter_subscriptions")
 }
 
+model EmailLog {
+  id         String   @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  subject    String
+  message    String   @db.Text
+  status     String   // 'sent', 'pending', 'failed'
+  sentAt     DateTime @default(now())
+  
+  fromUser User @relation("SentEmails", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("ReceivedEmails", fields: [toUserId], references: [id], onDelete: Cascade)
+  
+  @@map("email_logs")
+}
+
 enum NewsletterFrequency {
   DAILY
   WEEKLY
   MONTHLY
   NEVER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
 }
