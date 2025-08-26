@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 
 // Team Management
 export interface TeamMember {
@@ -39,16 +40,21 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
 export async function createTeamMember(data: Partial<TeamMember>): Promise<TeamMember> {
   console.log('🔧 AdminService.createTeamMember called with:', data);
   
+  // Generate a temporary password for the new team member
+  const tempPassword = generateTemporaryPassword();
+  const hashedPassword = await bcrypt.hash(tempPassword, 12);
+  
   const user = await prisma.user.create({
     data: {
       name: data.name || '',
       email: data.email!,
       role: data.role || 'COLLABORATOR',
+      password: hashedPassword,
       emailVerified: new Date()
     }
   });
 
-  console.log('🔧 User created in database:', user);
+  console.log('🔧 User created in database with temporary password:', { ...user, tempPassword });
 
   return {
     id: user.id,
@@ -87,6 +93,31 @@ export async function deleteTeamMember(id: string): Promise<void> {
   await prisma.user.delete({
     where: { id }
   });
+}
+
+export async function resetTeamMemberPassword(id: string, newPassword?: string): Promise<{ success: boolean; temporaryPassword?: string; error?: string }> {
+  try {
+    // Generate a temporary password if none provided
+    const tempPassword = newPassword || generateTemporaryPassword();
+    const hashedPassword = await bcrypt.hash(tempPassword, 12);
+
+    // Update user password
+    await prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword }
+    });
+
+    return {
+      success: true,
+      temporaryPassword: tempPassword
+    };
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    return {
+      success: false,
+      error: 'Failed to reset password'
+    };
+  }
 }
 
 // Activity Logs
@@ -284,4 +315,16 @@ function getActionType(action: string): ActivityLog['type'] {
 function calculatePercentChange(current: number, previous: number): number {
   if (previous === 0) return current > 0 ? 100 : 0;
   return Math.round(((current - previous) / previous) * 100);
+}
+
+function generateTemporaryPassword(): string {
+  // Generate a secure temporary password
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
+  let password = '';
+  
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  
+  return password;
 }

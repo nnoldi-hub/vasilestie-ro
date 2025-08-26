@@ -344,7 +344,25 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     async resetPassword(id: string) {
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
-        // Mock implementation
+        const response = await fetch(`/api/admin/team/${id}/reset-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sendEmail: true })
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to reset password');
+        }
+
+        // Show the temporary password to the admin
+        if (result.temporaryPassword) {
+          alert(`Password reset successful!\n\nTemporary password: ${result.temporaryPassword}\n\nPlease share this with the team member securely.`);
+        }
+
         dispatch({ type: 'SET_LOADING', payload: false });
         return true;
       } catch (error) {
