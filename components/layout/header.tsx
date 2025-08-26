@@ -177,6 +177,13 @@ export function Header() {
                       <span>Admin Panel</span>
                     </DropdownMenuItem>
                   )}
+
+                  {(session.user.role === 'ADMINISTRATOR' || session.user.role === 'COLLABORATOR') && (
+                    <DropdownMenuItem onClick={() => router.push('/colaborator')}>
+                      <Hammer className="mr-2 h-4 w-4" />
+                      <span>Dashboard Colaborator</span>
+                    </DropdownMenuItem>
+                  )}
                   {session.user.role === 'CRAFTSMAN' ? (
                     <>
                       <DropdownMenuItem onClick={() => router.push('/mesterias/dashboard')}>
@@ -335,6 +342,16 @@ export function Header() {
                     >
                       <Shield className="mr-2 h-4 w-4" />
                       Admin Panel
+                    </Button>
+                  )}
+                  {(session.user.role === 'ADMINISTRATOR' || session.user.role === 'COLLABORATOR') && (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => router.push('/colaborator')}
+                    >
+                      <Hammer className="mr-2 h-4 w-4" />
+                      Dashboard Colaborator
                     </Button>
                   )}
                   {session.user.role === 'CRAFTSMAN' ? (

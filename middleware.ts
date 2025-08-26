@@ -24,6 +24,11 @@ export default withAuth(
           return (token?.role as string) === 'ADMINISTRATOR';
         }
         
+        // Require authentication for collaborator routes
+        if (req.nextUrl.pathname.startsWith('/colaborator')) {
+          return ['ADMINISTRATOR', 'COLLABORATOR'].includes(token?.role as string);
+        }
+        
         // Require authentication for profile routes
         if (req.nextUrl.pathname.startsWith('/profil')) {
           return !!token;
@@ -38,6 +43,7 @@ export default withAuth(
 export const config = {
   matcher: [
     '/admin/:path*',
+    '/colaborator/:path*',
     '/profil/:path*'
   ]
 }

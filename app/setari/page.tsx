@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { Header } from '@/components/layout/header';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Settings, 
   User, 
@@ -26,11 +27,17 @@ import {
 
 export default function SetariPage() {
   const { data: session, status } = useSession();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  
   const [settings, setSettings] = useState({
-    // Profile settings
-    name: session?.user?.name || '',
-    email: session?.user?.email || '',
+    // Profile settings - initialize empty, will be loaded from API
+    name: '',
+    email: '',
     phone: '',
     city: '',
     
@@ -45,16 +52,65 @@ export default function SetariPage() {
     showPhone: true,
     showEmail: false,
     
-    // Password
+    // Password - NEVER pre-populate passwords
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
 
-  if (status === 'loading') {
+  // Load user profile data
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!session?.user) return;
+      
+      try {
+        setProfileLoading(true);
+        const response = await fetch('/api/user/profile');
+        
+        if (response.ok) {
+          const data = await response.json();
+          const user = data.user;
+          
+          // Update settings with actual user data
+          setSettings(prev => ({
+            ...prev,
+            name: user.name || '',
+            email: user.email || '',
+            // Don't pre-populate phone and city as these might come from wrong sources
+            // Let user fill these manually if needed
+          }));
+        } else {
+          console.error('Failed to load profile');
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    if (session) {
+      loadProfile();
+    }
+  }, [session]);
+
+  if (status === 'loading' || profileLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="animate-pulse space-y-6">
+              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
       </div>
     );
   }
@@ -67,9 +123,42 @@ export default function SetariPage() {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
-    // TODO: Implement save functionality
-    console.log('Settings saved:', settings);
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      // Save profile information
+      if (settings.name !== session?.user?.name) {
+        const response = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: settings.name,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update profile');
+        }
+      }
+
+      // TODO: Save other settings (notifications, privacy, etc.)
+      
+      toast({
+        title: "Succes!",
+        description: "Setările au fost salvate cu succes.",
+      });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Eroare",
+        description: "Nu s-au putut salva setările.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -304,28 +393,66 @@ export default function SetariPage() {
                       )}
                     </button>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Introduceti parola actuală pentru a putea schimba parola
+                  </p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="newPassword">Parola nouă</Label>
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      value={settings.newPassword}
-                      onChange={(e) => handleSettingChange('newPassword', e.target.value)}
-                      placeholder="Parola nouă"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showNewPassword ? "text" : "password"}
+                        value={settings.newPassword || ''}
+                        onChange={(e) => handleSettingChange('newPassword', e.target.value)}
+                        placeholder="Parola nouă"
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                      >
+                        {showNewPassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Minim 6 caractere
+                    </p>
                   </div>
                   <div>
                     <Label htmlFor="confirmPassword">Confirmă parola</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={settings.confirmPassword}
-                      onChange={(e) => handleSettingChange('confirmPassword', e.target.value)}
-                      placeholder="Confirmă parola nouă"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={settings.confirmPassword || ''}
+                        onChange={(e) => handleSettingChange('confirmPassword', e.target.value)}
+                        placeholder="Confirmă parola nouă"
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    {settings.newPassword && settings.confirmPassword && 
+                     settings.newPassword !== settings.confirmPassword && (
+                      <p className="text-xs text-red-500 mt-1">
+                        Parolele nu se potrivesc
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -333,9 +460,13 @@ export default function SetariPage() {
 
             {/* Save Button */}
             <div className="flex justify-end">
-              <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+              <Button 
+                onClick={handleSave} 
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
                 <Save className="w-4 h-4 mr-2" />
-                Salvează modificările
+                {loading ? 'Se salvează...' : 'Salvează modificările'}
               </Button>
             </div>
           </div>
