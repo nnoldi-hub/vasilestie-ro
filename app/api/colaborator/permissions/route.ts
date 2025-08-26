@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       // TODO: Load custom permissions from database
       permissions = {
         canViewUsers: true,
-        canEditUsers: false,
+        canEditUsers: true, // Allow user management for collaborators
         canViewCraftsmen: true,
         canEditCraftsmen: true, // Allow craftsmen management
         canViewContent: true,

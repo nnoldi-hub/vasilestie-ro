@@ -29,8 +29,9 @@ export async function GET(request: NextRequest) {
           name: true,
           email: true,
           role: true,
+          status: true,
           createdAt: true,
-          emailVerified: true,
+          lastLogin: true,
         },
         orderBy: {
           createdAt: 'desc'
@@ -43,9 +44,9 @@ export async function GET(request: NextRequest) {
         name: user.name || 'Utilizator anonim',
         email: user.email,
         role: user.role,
-        status: user.emailVerified ? 'active' : 'inactive',
+        status: user.status,
         createdAt: user.createdAt.toISOString(),
-        lastLogin: null // We don't track this yet
+        lastLogin: user.lastLogin?.toISOString() || null
       }));
 
       return NextResponse.json({

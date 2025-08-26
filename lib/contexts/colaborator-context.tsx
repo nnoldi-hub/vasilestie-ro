@@ -131,7 +131,7 @@ export function CollaboratorProvider({ children }: { children: ReactNode }) {
           // Default limited permissions for collaborators
           permissions = {
             canViewUsers: true,
-            canEditUsers: false,
+            canEditUsers: true, // Allow user editing for collaborators
             canViewCraftsmen: true,
             canEditCraftsmen: false,
             canViewContent: true,
