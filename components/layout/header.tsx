@@ -188,6 +188,11 @@ export function Header() {
                         <span>Profilul meu</span>
                       </DropdownMenuItem>
                     </>
+                  ) : session.user.role === 'ADMINISTRATOR' || session.user.role === 'COLLABORATOR' ? (
+                    <DropdownMenuItem onClick={() => router.push('/profil')}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profil</span>
+                    </DropdownMenuItem>
                   ) : (
                     <>
                       <DropdownMenuItem onClick={() => router.push('/profil')}>
@@ -351,6 +356,15 @@ export function Header() {
                         Profilul meu
                       </Button>
                     </>
+                  ) : session.user.role === 'ADMINISTRATOR' || session.user.role === 'COLLABORATOR' ? (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => router.push('/profil')}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      Profil
+                    </Button>
                   ) : (
                     <>
                       <Button
