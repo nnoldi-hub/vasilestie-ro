@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
@@ -8,9 +9,6 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  // Import Prisma dynamically to avoid build-time issues
-  const { prisma } = await import('@/lib/prisma');
-
   try {
     const { slug } = params;
 
@@ -36,16 +34,29 @@ export async function GET(
             icon: true
           }
         },
+        tags: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        },
         comments: {
           where: {
             approved: true,
             parentId: null // Only top-level comments
           },
-          include: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            guestName: true,
+            guestEmail: true,
             user: {
               select: {
                 id: true,
                 name: true,
+                email: true,
                 image: true
               }
             },
@@ -53,11 +64,17 @@ export async function GET(
               where: {
                 approved: true
               },
-              include: {
+              select: {
+                id: true,
+                content: true,
+                createdAt: true,
+                guestName: true,
+                guestEmail: true,
                 user: {
                   select: {
                     id: true,
                     name: true,
+                    email: true,
                     image: true
                   }
                 }
@@ -124,11 +141,27 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: {
-        post: {
-          ...post,
-          views: post.views + 1 // Return incremented view count
-        },
+      post: {
+        ...post,
+        views: post.views + 1, // Return incremented view count
+        comments: post.comments.map(comment => ({
+          id: comment.id,
+          content: comment.content,
+          createdAt: comment.createdAt.toISOString(),
+          author: {
+            name: comment.user?.name || comment.guestName || null,
+            email: comment.user?.email || comment.guestEmail || 'anonymous@example.com'
+          },
+          replies: comment.replies.map(reply => ({
+            id: reply.id,
+            content: reply.content,
+            createdAt: reply.createdAt.toISOString(),
+            author: {
+              name: reply.user?.name || reply.guestName || null,
+              email: reply.user?.email || reply.guestEmail || 'anonymous@example.com'
+            }
+          }))
+        })),
         relatedPosts
       }
     });

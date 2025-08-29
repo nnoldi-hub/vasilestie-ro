@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-// GET /api/colaborator/content/categories - Get all categories
+// GET /api/colaborator/content/pages - Get all pages
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,49 +18,35 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const categories = await prisma.blogCategory.findMany({
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        description: true,
-        color: true,
-        _count: {
+    const pages = await prisma.staticPage.findMany({
+      include: {
+        author: {
           select: {
-            posts: true
+            name: true,
+            image: true
           }
         }
       },
       orderBy: {
-        name: 'asc'
+        updatedAt: 'desc'
       }
     });
 
-    // Transform data to include postsCount
-    const transformedCategories = categories.map(category => ({
-      id: category.id,
-      name: category.name,
-      slug: category.slug,
-      description: category.description,
-      color: category.color,
-      postsCount: category._count.posts
-    }));
-
     return NextResponse.json({
       success: true,
-      categories: transformedCategories
+      pages
     });
 
   } catch (error) {
-    console.error('Error getting categories:', error);
+    console.error('Error getting pages:', error);
     return NextResponse.json(
-      { error: 'Failed to get categories' },
+      { error: 'Failed to get pages' },
       { status: 500 }
     );
   }
 }
 
-// POST /api/colaborator/content/categories - Create new category
+// POST /api/colaborator/content/pages - Create new page
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -72,49 +58,71 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, slug, description, color } = await request.json();
+    const { 
+      title, 
+      slug, 
+      content, 
+      excerpt, 
+      published, 
+      template, 
+      metaTitle, 
+      metaDescription 
+    } = await request.json();
 
     // Validate required fields
-    if (!name) {
+    if (!title || !content) {
       return NextResponse.json(
-        { error: 'Numele categoriei este obligatoriu' },
+        { error: 'Titlul și conținutul sunt obligatorii' },
         { status: 400 }
       );
     }
 
-    const finalSlug = slug || name.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
+    const finalSlug = slug || title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
 
     // Check if slug already exists
-    const existingCategory = await prisma.blogCategory.findUnique({
+    const existingPage = await prisma.staticPage.findUnique({
       where: { slug: finalSlug }
     });
 
-    if (existingCategory) {
+    if (existingPage) {
       return NextResponse.json(
         { error: 'URL slug-ul există deja' },
         { status: 400 }
       );
     }
 
-    const category = await prisma.blogCategory.create({
+    const page = await prisma.staticPage.create({
       data: {
-        name,
+        title,
         slug: finalSlug,
-        description: description || null,
-        color: color || null
+        content,
+        excerpt: excerpt || null,
+        published: published || false,
+        template: template || 'default',
+        metaTitle: metaTitle || null,
+        metaDescription: metaDescription || null,
+        authorId: session.user.id
+      },
+      include: {
+        author: {
+          select: {
+            name: true,
+            image: true
+          }
+        }
       }
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Categoria a fost creată cu succes',
-      category
+      message: 'Pagina a fost creată cu succes',
+      page
     });
 
   } catch (error) {
-    console.error('Error creating category:', error);
+    console.error('Error creating page:', error);
     return NextResponse.json(
-      { error: 'Failed to create category' },
+      { error: 'Failed to create page' },
       { status: 500 }
     );
   }

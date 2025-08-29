@@ -241,11 +241,11 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                   </div>
                   <div className="flex items-center">
                     <Eye className="h-5 w-5 mr-2" />
-                    {post.views} vizualizări
+                    {post.views || 0} vizualizări
                   </div>
                   <div className="flex items-center">
                     <MessageSquare className="h-5 w-5 mr-2" />
-                    {post.comments.length} comentarii
+                    {post.comments ? post.comments.length : 0} comentarii
                   </div>
                 </div>
                 
@@ -270,7 +270,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             </div>
 
             {/* Tags */}
-            {post.tags.length > 0 && (
+            {post.tags && post.tags.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-lg font-semibold mb-4">Tags</h3>
                 <div className="flex flex-wrap gap-2">
@@ -284,7 +284,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             )}
 
             {/* Related Posts */}
-            {post.relatedPosts.length > 0 && (
+            {post.relatedPosts && post.relatedPosts.length > 0 && (
               <div className="mb-12">
                 <h3 className="text-2xl font-bold mb-6">Articole similare</h3>
                 <div className="grid md:grid-cols-2 gap-6">
@@ -322,10 +322,10 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             {/* Comments Section */}
             <div>
               <h3 className="text-2xl font-bold mb-6">
-                Comentarii ({post.comments.length})
+                Comentarii ({post.comments ? post.comments.length : 0})
               </h3>
               
-              {post.comments.length === 0 ? (
+              {!post.comments || post.comments.length === 0 ? (
                 <div className="text-center py-8 bg-gray-50 rounded-lg">
                   <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600">

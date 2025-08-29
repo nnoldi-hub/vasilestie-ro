@@ -90,6 +90,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate category if provided
+    if (categoryId && categoryId !== 'none') {
+      const categoryExists = await prisma.blogCategory.findUnique({
+        where: { slug: categoryId }
+      });
+
+      if (!categoryExists) {
+        return NextResponse.json(
+          { error: 'Categoria specificată nu există' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Check if slug already exists
     const existingPost = await prisma.blogPost.findUnique({
       where: { slug }
@@ -113,8 +127,15 @@ export async function POST(request: NextRequest) {
       authorId: session.user.id
     };
 
-    if (categoryId) {
-      articleData.categoryId = categoryId;
+    // Only set categoryId if it exists and is not 'none'
+    if (categoryId && categoryId !== 'none') {
+      // Find the category by slug to get the ID
+      const category = await prisma.blogCategory.findUnique({
+        where: { slug: categoryId }
+      });
+      if (category) {
+        articleData.categoryId = category.id;
+      }
     }
 
     const article = await prisma.blogPost.create({

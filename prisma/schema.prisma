@@ -65,6 +65,8 @@ model User {
   // Blog relations
   blogPosts    BlogPost[]    @relation("BlogAuthor")
   blogComments BlogComment[] @relation("BlogComments")
+  staticPages  StaticPage[]  @relation("AuthoredPages")
+  siteSettings SiteSettings[]
   
   // Email relations
   sentEmails     EmailLog[] @relation("SentEmails")
@@ -89,7 +91,12 @@ model Craftsman {
   address               String
   city                  String
   county                String
-  experience            Int // years
+    latitude              Float? // coordonată geografică
+    longitude             Float? // coordonată geografică
+    priceMin              Int? // preț minim
+    priceMax              Int? // preț maxim
+    experience            Int // ani experiență
+    languages             String? // limbi vorbite, separate prin virgulă
   verified              Boolean            @default(false)
   rating                Float              @default(0)
   reviewCount           Int                @default(0)
@@ -282,9 +289,9 @@ model BlogPost {
   authorId String
   author   User   @relation("BlogAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
-  // Category relationship
-  categoryId String
-  category   BlogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  // Category relationship (optional)
+  categoryId String?
+  category   BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   // Tags relationship (many-to-many)
   tags BlogTag[]
@@ -394,6 +401,46 @@ model EmailLog {
   toUser   User @relation("ReceivedEmails", fields: [toUserId], references: [id], onDelete: Cascade)
   
   @@map("email_logs")
+}
+
+model StaticPage {
+  id          String  @id @default(cuid())
+  title       String
+  slug        String  @unique
+  content     String  @db.Text
+  excerpt     String?
+  published   Boolean @default(false)
+  template    String  @default("default") // default, landing, contact, etc.
+  
+  // SEO fields
+  metaTitle       String?
+  metaDescription String?
+  
+  // Author
+  authorId String
+  author   User   @relation("AuthoredPages", fields: [authorId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("static_pages")
+}
+
+model SiteSettings {
+  id          String @id @default(cuid())
+  section     String // 'contact', 'about', 'company', etc.
+  key         String // 'phone', 'email', 'address', etc.
+  value       String @db.Text
+  type        String @default("text") // text, textarea, image, number, boolean
+  label       String // Human readable label
+  description String? // Helper text
+  
+  updatedAt   DateTime @updatedAt
+  updatedBy   String
+  updater     User     @relation(fields: [updatedBy], references: [id])
+  
+  @@unique([section, key])
+  @@map("site_settings")
 }
 
 enum NewsletterFrequency {
